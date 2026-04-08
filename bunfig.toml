@@ -1,0 +1,16 @@
+[run]
+preload = ["./preload.ts"]
+
+[install]
+optional = false
+
+[build]
+target = "node"
+
+# Module aliases — redirect internal/missing packages to local shims
+[alias]
+"bun:bundle" = "./shims/bun-bundle.ts"
+"color-diff-napi" = "./shims/color-diff-napi.ts"
+"@ant/computer-use-mcp" = "./shims/ant/computer-use-mcp/index.ts"
+"@ant/claude-for-chrome-mcp" = "./shims/ant/claude-for-chrome-mcp/index.ts"
+"@ant/computer-use-swift" = "./shims/ant/computer-use-swift/index.ts"

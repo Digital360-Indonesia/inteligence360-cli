@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.env
+mycli.sh
+-Users-araya-Downloads-ai-lab-claudecode-cli
+.DS_Store
+**/.DS_Store

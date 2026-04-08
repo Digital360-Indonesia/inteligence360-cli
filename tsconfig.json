@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "src/*": ["./src/*"],
+      "bun:bundle": ["./shims/bun-bundle.ts"],
+      "@ant/computer-use-mcp": ["./shims/ant/computer-use-mcp/index.ts"],
+      "@ant/computer-use-mcp/*": ["./shims/ant/computer-use-mcp/index.ts"],
+      "@ant/claude-for-chrome-mcp": ["./shims/ant/claude-for-chrome-mcp/index.ts"],
+      "@ant/computer-use-swift": ["./shims/ant/computer-use-swift/index.ts"],
+      "color-diff-napi": ["./shims/color-diff-napi.ts"],
+      "react/compiler-runtime": ["./shims/react-compiler-runtime.ts"]
+    }
+  },
+  "include": ["src/**/*", "shims/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
