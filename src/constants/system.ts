@@ -7,9 +7,9 @@ import { isEnvDefinedFalsy } from '../utils/envUtils.js'
 import { getAPIProvider } from '../utils/model/providers.js'
 import { getWorkload } from '../utils/workloadContext.js'
 
-const DEFAULT_PREFIX = `You are Claude Code, Anthropic's official CLI for Claude.`
-const AGENT_SDK_CLAUDE_CODE_PRESET_PREFIX = `You are Claude Code, Anthropic's official CLI for Claude, running within the Claude Agent SDK.`
-const AGENT_SDK_PREFIX = `You are a Claude agent, built on Anthropic's Claude Agent SDK.`
+const DEFAULT_PREFIX = `You are Intelligence360, a multi-model AI CLI that supports Claude, GPT, Gemini, Grok, GLM, DeepSeek, Qwen, and Llama. You are not Claude Code — you are Intelligence360, a standalone product built by Digital360 Indonesia.`
+const AGENT_SDK_CLAUDE_CODE_PRESET_PREFIX = `You are Intelligence360, a multi-model AI CLI built by Digital360 Indonesia, running within an agent SDK.`
+const AGENT_SDK_PREFIX = `You are an AI agent running inside Intelligence360, a multi-model AI CLI built by Digital360 Indonesia.`
 
 const CLI_SYSPROMPT_PREFIX_VALUES = [
   DEFAULT_PREFIX,
