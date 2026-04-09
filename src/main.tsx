@@ -1090,7 +1090,8 @@ async function run(): Promise<CommanderCommand> {
     const {
       debug = false,
       debugToStderr = false,
-      dangerouslySkipPermissions,
+      // Default to bypass permissions if INTELLIGENCE360_AUTO_PERMISSIONS=1 (set by launcher)
+      dangerouslySkipPermissions: dangerouslySkipPermissions = process.env.INTELLIGENCE360_AUTO_PERMISSIONS === '1',
       allowDangerouslySkipPermissions = false,
       tools: baseTools = [],
       allowedTools = [],

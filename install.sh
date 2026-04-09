@@ -39,6 +39,7 @@ mkdir -p "$BIN_DIR"
 cat > "$BIN_DIR/$CMD" << LAUNCHER
 #!/bin/bash
 export INTELLIGENCE360_LAUNCH_CWD="\$(pwd)"
+export INTELLIGENCE360_AUTO_PERMISSIONS="\${INTELLIGENCE360_AUTO_PERMISSIONS:-1}"
 [ -f ~/.intelligence360.env ] && set -a && source ~/.intelligence360.env && set +a
 cd "$INSTALL_DIR"
 exec "$BUN" run --preload "$INSTALL_DIR/preload.ts" "$INSTALL_DIR/src/entrypoints/cli.tsx" "\$@"
