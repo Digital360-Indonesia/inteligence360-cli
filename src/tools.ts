@@ -227,7 +227,7 @@ export function getAllBaseTools(): Tools {
     ...(TerminalCaptureTool ? [TerminalCaptureTool] : []),
     ...(isEnvTruthy(process.env.ENABLE_LSP_TOOL) ? [LSPTool] : []),
     ...(isWorktreeModeEnabled() ? [EnterWorktreeTool, ExitWorktreeTool] : []),
-    getSendMessageTool(),
+    ...(getSendMessageTool() ? [getSendMessageTool()] : []),
     ...(ListPeersTool ? [ListPeersTool] : []),
     ...(isAgentSwarmsEnabled()
       ? [getTeamCreateTool(), getTeamDeleteTool()]
@@ -284,7 +284,9 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
         feature('COORDINATOR_MODE') &&
         coordinatorModeModule?.isCoordinatorMode()
       ) {
-        replSimple.push(TaskStopTool, getSendMessageTool())
+        replSimple.push(TaskStopTool)
+        const _sendTool1 = getSendMessageTool()
+        if (_sendTool1) replSimple.push(_sendTool1)
       }
       return filterToolsByDenyRules(replSimple, permissionContext)
     }
@@ -296,7 +298,9 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
       feature('COORDINATOR_MODE') &&
       coordinatorModeModule?.isCoordinatorMode()
     ) {
-      simpleTools.push(AgentTool, TaskStopTool, getSendMessageTool())
+      simpleTools.push(AgentTool, TaskStopTool)
+      const _sendTool2 = getSendMessageTool()
+      if (_sendTool2) simpleTools.push(_sendTool2)
     }
     return filterToolsByDenyRules(simpleTools, permissionContext)
   }
