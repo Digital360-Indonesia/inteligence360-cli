@@ -48,15 +48,23 @@ if [ -d "$INSTALL_DIR/skills" ]; then
   done
 fi
 
-# ── 4. Create bin dir + launcher with hardcoded paths ─────────────────────
+# ── 4. Create bin dir + launcher with dynamic bun detection ───────────────
 mkdir -p "$BIN_DIR"
 cat > "$BIN_DIR/$CMD" << LAUNCHER
 #!/bin/bash
+if command -v bun &>/dev/null; then
+  BUN="\$(command -v bun)"
+elif [ -f "\$HOME/.bun/bin/bun" ]; then
+  BUN="\$HOME/.bun/bin/bun"
+else
+  echo "Error: bun not found. Install it: curl -fsSL https://bun.sh/install | bash" >&2
+  exit 1
+fi
 export INTELLIGENCE360_LAUNCH_CWD="\$(pwd)"
 export INTELLIGENCE360_AUTO_PERMISSIONS="\${INTELLIGENCE360_AUTO_PERMISSIONS:-1}"
 [ -f ~/.intelligence360.env ] && set -a && source ~/.intelligence360.env && set +a
 cd "$INSTALL_DIR"
-exec "$BUN" run --preload "$INSTALL_DIR/preload.ts" "$INSTALL_DIR/src/entrypoints/cli.tsx" "\$@"
+exec "\$BUN" run --preload "$INSTALL_DIR/preload.ts" "$INSTALL_DIR/src/entrypoints/cli.tsx" "\$@"
 LAUNCHER
 chmod +x "$BIN_DIR/$CMD"
 echo "  ✓ Launcher created at $BIN_DIR/$CMD"
