@@ -34,6 +34,19 @@ cd "$INSTALL_DIR"
 bun install --frozen-lockfile 2>/dev/null || bun install
 echo "  ✓ Dependencies installed"
 
+# ── 3b. Install bundled skills ─────────────────────────────────────────────
+SKILLS_DIR="$HOME/.intelligence360/skills"
+mkdir -p "$SKILLS_DIR"
+if [ -d "$INSTALL_DIR/skills" ]; then
+  for skill_dir in "$INSTALL_DIR/skills"/*/; do
+    skill_name="$(basename "$skill_dir")"
+    if [ ! -d "$SKILLS_DIR/$skill_name" ]; then
+      cp -r "$skill_dir" "$SKILLS_DIR/$skill_name"
+      echo "  ✓ Skill: $skill_name"
+    fi
+  done
+fi
+
 # ── 4. Create bin dir + launcher with hardcoded paths ─────────────────────
 mkdir -p "$BIN_DIR"
 cat > "$BIN_DIR/$CMD" << LAUNCHER

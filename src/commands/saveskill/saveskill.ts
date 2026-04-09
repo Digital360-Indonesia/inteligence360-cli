@@ -4,6 +4,7 @@ import { join } from 'path'
 import type { LocalCommandCall } from '../../types/command.js'
 
 const SKILLS_DIR = join(homedir(), '.intelligence360', 'skills')
+const BUNDLED_SKILLS_DIR = join(import.meta.dir, '..', '..', '..', 'skills')
 const CLAUDE_MD = join(homedir(), '.claude', 'CLAUDE.md')
 
 interface SkillMeta {
@@ -35,22 +36,32 @@ function getFirstCodeBlock(content: string): string {
 export function rebuildClaudeMd() {
   mkdirSync(SKILLS_DIR, { recursive: true })
 
-  // Find all skill folders with a SKILL.md
-  const skillFolders = existsSync(SKILLS_DIR)
-    ? readdirSync(SKILLS_DIR, { withFileTypes: true })
-        .filter(d => d.isDirectory())
-        .map(d => d.name)
-        .filter(name => existsSync(join(SKILLS_DIR, name, 'SKILL.md')))
-        .sort()
-    : []
+  // Collect skill folders from both user dir and bundled dir (user takes precedence)
+  const seen = new Set<string>()
+  const skillEntries: { name: string; dir: string }[] = []
+
+  for (const base of [SKILLS_DIR, BUNDLED_SKILLS_DIR]) {
+    if (!existsSync(base)) continue
+    for (const d of readdirSync(base, { withFileTypes: true })) {
+      if (!d.isDirectory()) continue
+      if (seen.has(d.name)) continue
+      if (!existsSync(join(base, d.name, 'SKILL.md'))) continue
+      seen.add(d.name)
+      skillEntries.push({ name: d.name, dir: base })
+    }
+  }
+  skillEntries.sort((a, b) => a.name.localeCompare(b.name))
+  const skillFolders = skillEntries.map(e => e.name)
 
   let skillsBlock = '<!-- SKILLS:START -->\n'
 
   if (skillFolders.length === 0) {
     skillsBlock += '_No skills saved yet. Use /saveskill inside Intelligence360 to add one._\n'
   } else {
-    for (const folder of skillFolders) {
-      const content = readFileSync(join(SKILLS_DIR, folder, 'SKILL.md'), 'utf8')
+    for (const entry of skillEntries) {
+    const folder = entry.name
+    {
+      const content = readFileSync(join(entry.dir, folder, 'SKILL.md'), 'utf8')
       const meta = parseSkillMeta(content)
       if (!meta) continue
 
@@ -61,8 +72,9 @@ export function rebuildClaudeMd() {
       skillsBlock += `### ${meta.name}${category}${status}\n`
       skillsBlock += `${meta.description}\n`
       if (code) skillsBlock += `${code}\n`
-      skillsBlock += `Full details: ${SKILLS_DIR}/${folder}/SKILL.md\n\n`
+      skillsBlock += `Full details: ${entry.dir}/${folder}/SKILL.md\n\n`
     }
+  }
   }
 
   skillsBlock += '<!-- SKILLS:END -->'
