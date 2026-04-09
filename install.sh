@@ -16,6 +16,7 @@ if ! command -v bun &>/dev/null; then
   curl -fsSL https://bun.sh/install | bash
   export PATH="$HOME/.bun/bin:$PATH"
 fi
+BUN=$(command -v bun)
 echo "  ✓ Bun $(bun --version)"
 
 # ── 2. Clone or update repo ────────────────────────────────────────────────
