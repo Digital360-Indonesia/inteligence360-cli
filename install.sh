@@ -34,11 +34,17 @@ cd "$INSTALL_DIR"
 bun install --frozen-lockfile 2>/dev/null || bun install
 echo "  ✓ Dependencies installed"
 
-# ── 4. Create bin dir + symlink ────────────────────────────────────────────
+# ── 4. Create bin dir + launcher with hardcoded paths ─────────────────────
 mkdir -p "$BIN_DIR"
-ln -sf "$INSTALL_DIR/intelligence360.sh" "$BIN_DIR/$CMD"
-chmod +x "$INSTALL_DIR/intelligence360.sh"
-echo "  ✓ Command linked to $BIN_DIR/$CMD"
+cat > "$BIN_DIR/$CMD" << LAUNCHER
+#!/bin/bash
+export INTELLIGENCE360_LAUNCH_CWD="\$(pwd)"
+[ -f ~/.intelligence360.env ] && set -a && source ~/.intelligence360.env && set +a
+cd "$INSTALL_DIR"
+exec "$BUN" run --preload "$INSTALL_DIR/preload.ts" "$INSTALL_DIR/src/entrypoints/cli.tsx" "\$@"
+LAUNCHER
+chmod +x "$BIN_DIR/$CMD"
+echo "  ✓ Launcher created at $BIN_DIR/$CMD"
 
 # ── 5. Add ~/.local/bin to PATH if needed ──────────────────────────────────
 add_to_path() {
