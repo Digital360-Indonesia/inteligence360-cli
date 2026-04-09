@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, statSync, watch } from 'fs'
+import { existsSync, openSync, readFileSync, readSync, closeSync, readdirSync, statSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
 import { messageBus } from './messageBus.js'
@@ -107,30 +107,34 @@ function getSessionMessages(project: string, sessionId: string) {
   return messages
 }
 
-// ── File watcher ─────────────────────────────────────────────────────────────
+// ── File watcher (poll-based, reliable on macOS) ──────────────────────────────
 
-let currentWatcher: ReturnType<typeof watch> | null = null
+let currentInterval: ReturnType<typeof setInterval> | null = null
 
 function watchSession(project: string, sessionId: string) {
-  currentWatcher?.close()
+  if (currentInterval) clearInterval(currentInterval)
   const path = join(PROJECTS_DIR, project, `${sessionId}.jsonl`)
   if (!existsSync(path)) return
   let lastSize = statSync(path).size
-  currentWatcher = watch(path, () => {
+
+  currentInterval = setInterval(() => {
     try {
       const newSize = statSync(path).size
       if (newSize <= lastSize) return
-      const content = readFileSync(path, 'utf8')
-      const newLines = content.slice(lastSize).split('\n').filter(Boolean)
+      const bytesToRead = newSize - lastSize
+      const fd = openSync(path, 'r')
+      const buf = Buffer.allocUnsafe(bytesToRead)
+      readSync(fd, buf, 0, bytesToRead, lastSize)
+      closeSync(fd)
       lastSize = newSize
-      for (const line of newLines) {
+      for (const line of buf.toString('utf8').split('\n').filter(Boolean)) {
         try {
           const entry = JSON.parse(line) as Record<string, unknown>
           messageBus.broadcast({ type: 'message', entry })
         } catch {}
       }
     } catch {}
-  })
+  }, 500)
 }
 
 // ── Dashboard HTML ────────────────────────────────────────────────────────────
@@ -194,7 +198,7 @@ export function startDashboardServer(currentModel: string) {
           const ev = JSON.parse(String(msg)) as Record<string, unknown>
           if (ev.type === 'input' && typeof ev.text === 'string' && ev.text.trim()) {
             // Inject text into stdin so the running REPL receives it
-            process.stdin.push(ev.text + '\n')
+            process.stdin.push(ev.text + '\r')
           }
         } catch {}
       },
