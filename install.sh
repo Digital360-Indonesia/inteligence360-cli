@@ -80,16 +80,32 @@ add_to_path() {
   fi
 }
 
+PATH_WAS_ADDED=false
 if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
   add_to_path "$HOME/.zshrc"
   add_to_path "$HOME/.bashrc"
   export PATH="$HOME/.local/bin:$PATH"
+  PATH_WAS_ADDED=true
 fi
 
 echo ""
 echo "  ✅ Intelligence360 installed successfully!"
 echo ""
-echo "  Run:  intelligence360"
-echo ""
+
+if [ "$PATH_WAS_ADDED" = true ]; then
+  echo "  ⚠️  PATH was updated — reload your shell first:"
+  echo ""
+  echo "     source ~/.bashrc        # bash users"
+  echo "     source ~/.zshrc         # zsh users"
+  echo ""
+  echo "  Or run directly without reloading:"
+  echo ""
+  echo "     $BIN_DIR/$CMD"
+  echo ""
+else
+  echo "  Run:  intelligence360"
+  echo ""
+fi
+
 echo "  First time? Run /model inside the app to configure your AI provider."
 echo ""
