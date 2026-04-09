@@ -189,7 +189,15 @@ export function startDashboardServer(currentModel: string) {
       close(ws) {
         clients.delete(ws)
       },
-      message(_ws, _msg) {},
+      message(_ws, msg) {
+        try {
+          const ev = JSON.parse(String(msg)) as Record<string, unknown>
+          if (ev.type === 'input' && typeof ev.text === 'string' && ev.text.trim()) {
+            // Inject text into stdin so the running REPL receives it
+            process.stdin.push(ev.text + '\n')
+          }
+        } catch {}
+      },
     },
   })
 
