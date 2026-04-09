@@ -3,358 +3,348 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Intelligence360 Command Center</title>
+<title>Intelligence360 Dashboard</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg:        #0d1b2e;
-    --panel:     #132035;
-    --panel2:    #1a2d47;
-    --border:    #2a5298;
-    --border-br: #3a6fc8;
-    --gold:      #f5c842;
-    --gold-dim:  #c9a52a;
-    --text:      #e8f4ff;
-    --dim:       #7ba7cc;
-    --user-bg:   #162840;
-    --ai-bg:     #0f1f35;
-    --green:     #34e8a0;
-    --red:       #ff6b7a;
-    --blue:      #4dabf7;
-    --scroll:    #2a529866;
-    --input-bg:  #0a1525;
-  }
+:root {
+  --bg:        #09111e;
+  --panel:     #0e1928;
+  --panel2:    #142235;
+  --panel3:    #1a2d47;
+  --border:    #1a2e48;
+  --border-br: #2a5298;
+  --gold:      #f5c842;
+  --gold-dim:  #c9a52a;
+  --text:      #ddeeff;
+  --dim:       #4f7499;
+  --dim2:      #7bafd4;
+  --green:     #34e8a0;
+  --red:       #ff6b7a;
+  --blue:      #4dabf7;
+  --orange:    #fb923c;
+  --scroll:    #2a529833;
+  --input-bg:  #060e1a;
+  --radius:    6px;
+  --shadow:    0 4px 24px #00000077;
+  --font-size: 13px;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-    font-size: 13px;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: var(--font-size);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-  /* ── Header ── */
-  header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 20px;
-    background: var(--panel2);
-    border-bottom: 1px solid var(--border-br);
-    flex-shrink: 0;
-    box-shadow: 0 1px 12px #0008;
-  }
-  .logo {
-    color: var(--gold);
-    font-size: 16px;
-    font-weight: bold;
-    letter-spacing: 1px;
-  }
-  .logo span { color: var(--dim); font-size: 11px; font-weight: normal; margin-left: 8px; }
-  .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-  .ws-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--red);
-    box-shadow: 0 0 6px var(--red);
-    transition: background 0.3s, box-shadow 0.3s;
-  }
-  .ws-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
-  .ws-label { color: var(--dim); font-size: 11px; }
-  .model-pill {
-    background: #2a529822;
-    border: 1px solid var(--border-br);
-    border-radius: 20px;
-    padding: 3px 12px;
-    color: var(--gold);
-    font-size: 11px;
-    letter-spacing: 0.5px;
-  }
+/* ── Header ── */
+header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 16px; height: 52px;
+  background: var(--panel2); border-bottom: 1px solid var(--border);
+  flex-shrink: 0; box-shadow: var(--shadow); z-index: 100;
+}
+.logo { color: var(--gold); font-size: 14px; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; }
+.logo-sub { color: var(--dim); font-size: 10px; font-weight: 400; margin-left: 6px; }
+.hdivider { width: 1px; height: 20px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
 
-  /* ── Main layout ── */
-  .layout {
-    display: grid;
-    grid-template-columns: 240px 1fr 220px;
-    flex: 1;
-    overflow: hidden;
-  }
+/* Session picker */
+.session-picker { position: relative; }
+.sp-btn {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text);
+  font-family: inherit; font-size: 12px;
+  padding: 5px 10px; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  max-width: 280px; min-width: 140px;
+}
+.sp-btn:hover { border-color: var(--border-br); background: var(--panel3); }
+.sp-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.sp-dot.live { background: var(--green); box-shadow: 0 0 5px var(--green); }
+.sp-dot.past { background: var(--dim); }
+.sp-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; color: var(--dim2); font-size: 11px; }
+.sp-arrow { color: var(--dim); font-size: 10px; flex-shrink: 0; }
+.session-dropdown {
+  position: absolute; top: calc(100% + 5px); left: 0;
+  min-width: 300px; background: var(--panel2);
+  border: 1px solid var(--border-br); border-radius: var(--radius);
+  box-shadow: 0 12px 40px #000000aa; z-index: 1000;
+  display: none; overflow: hidden; max-height: 400px; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: var(--scroll) transparent;
+}
+.session-dropdown.open { display: block; animation: dropIn 0.12s ease; }
+@keyframes dropIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; } }
+.sd-hdr { padding: 7px 12px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--border); background: var(--panel); }
+.sd-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--border)33; transition: background 0.1s; }
+.sd-item:hover { background: var(--panel3); }
+.sd-item.sel { background: #2a529818; border-left: 2px solid var(--blue); }
+.sd-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.sd-dot.live { background: var(--green); box-shadow: 0 0 5px var(--green); }
+.sd-dot.past { background: var(--dim); }
+.sd-info { flex: 1; min-width: 0; }
+.sd-summary { font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sd-meta { font-size: 10px; color: var(--dim); margin-top: 2px; }
+.sd-more { width: 100%; padding: 8px; background: none; border: none; border-top: 1px solid var(--border); color: var(--blue); font-family: inherit; font-size: 11px; cursor: pointer; transition: background 0.15s; text-align: center; }
+.sd-more:hover { background: var(--panel3); }
 
-  /* ── Panels ── */
-  .panel {
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .panel:last-child { border-right: none; border-left: 1px solid var(--border); }
-  .panel-title {
-    padding: 9px 14px;
-    font-size: 10px;
-    letter-spacing: 2px;
-    color: var(--blue);
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-    background: var(--panel2);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .live-badge {
-    background: var(--green);
-    color: #000;
-    font-size: 9px;
-    padding: 1px 6px;
-    border-radius: 10px;
-    letter-spacing: 1px;
-    font-weight: bold;
-    display: none;
-  }
-  .live-badge.show { display: inline; }
-  .panel-body {
-    flex: 1;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--scroll) transparent;
-  }
+/* Header right */
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.readonly-badge { background: #fb923c12; border: 1px solid #fb923c55; border-radius: 20px; padding: 2px 10px; color: var(--orange); font-size: 10px; display: none; }
+.readonly-badge.show { display: block; }
+.model-pill { background: var(--panel); border: 1px solid var(--border-br); border-radius: 20px; padding: 3px 12px; color: var(--gold); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+.ws-wrap { display: flex; align-items: center; gap: 6px; }
+.ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 6px var(--red); transition: background 0.3s, box-shadow 0.3s; }
+.ws-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.ws-label { color: var(--dim); font-size: 11px; }
 
-  /* ── Session list ── */
-  .session-item {
-    padding: 10px 14px;
-    border-bottom: 1px solid #1a2d4744;
-    cursor: pointer;
-    transition: background 0.12s;
-  }
-  .session-item:hover { background: var(--panel2); }
-  .session-item.active {
-    background: var(--panel2);
-    border-left: 2px solid var(--blue);
-  }
-  .session-id { color: var(--dim); font-size: 10px; margin-bottom: 3px; }
-  .session-summary { color: var(--text); font-size: 12px; line-height: 1.4; word-break: break-word; }
-  .session-time { color: var(--dim); font-size: 10px; margin-top: 3px; }
+/* ── Nav bar ── */
+.nav-bar {
+  display: flex; align-items: center; gap: 2px;
+  padding: 0 16px; height: 38px;
+  background: var(--panel); border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.nav-tab {
+  padding: 5px 14px; border: none; border-radius: var(--radius);
+  background: none; color: var(--dim); font-family: inherit; font-size: 12px;
+  cursor: pointer; transition: background 0.15s, color 0.15s;
+  letter-spacing: 0.3px; white-space: nowrap;
+}
+.nav-tab:hover { color: var(--text); background: var(--panel2); }
+.nav-tab.active { color: var(--gold); background: var(--panel2); border-bottom: 2px solid var(--gold); border-radius: var(--radius) var(--radius) 0 0; }
 
-  .load-more-btn {
-    width: calc(100% - 28px);
-    margin: 8px 14px;
-    padding: 7px;
-    background: #2a529820;
-    border: 1px solid var(--border);
-    color: var(--blue);
-    cursor: pointer;
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 11px;
-    letter-spacing: 1px;
-    transition: background 0.15s;
-    text-align: center;
-  }
-  .load-more-btn:hover { background: #2a529840; }
+/* ── Pages ── */
+.page { flex: 1; display: none; overflow: hidden; }
+.page.active { display: flex; }
 
-  /* ── Chat area ── */
-  .chat-panel { border-right: none; display: flex; flex-direction: column; overflow: hidden; }
-  .chat-empty {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 12px;
-    color: var(--dim);
-  }
-  .chat-empty .cat {
-    font-size: 11px;
-    color: var(--border-br);
-    line-height: 1.4;
-    white-space: pre;
-    text-align: center;
-  }
-  #chatBody {
-    flex: 1;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--scroll) transparent;
-    min-height: 0;
-  }
-  #messages {
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .msg {
-    padding: 10px 14px;
-    border-radius: 6px;
-    line-height: 1.6;
-    word-break: break-word;
-    white-space: pre-wrap;
-    max-width: 100%;
-    font-size: 13px;
-    animation: fadeIn 0.2s ease;
-  }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-  .msg-user {
-    background: var(--user-bg);
-    border-left: 2px solid var(--gold);
-    align-self: flex-end;
-    max-width: 88%;
-    border: 1px solid #f5c84222;
-    border-left: 2px solid var(--gold);
-  }
-  .msg-assistant {
-    background: var(--ai-bg);
-    border: 1px solid var(--border);
-    border-left: 2px solid var(--blue);
-  }
-  .msg-role {
-    font-size: 10px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 5px;
-    color: var(--dim);
-  }
-  .msg-user .msg-role { color: var(--gold-dim); }
-  .msg-assistant .msg-role { color: var(--blue); }
+/* ── Overview layout ── */
+#page-overview { flex-direction: row; }
+.chat-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border); }
+.chat-bar { padding: 9px 16px; font-size: 10px; letter-spacing: 2px; color: var(--blue); text-transform: uppercase; border-bottom: 1px solid var(--border); background: var(--panel2); flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.live-badge { background: var(--green); color: #000; font-size: 9px; padding: 1px 6px; border-radius: 10px; letter-spacing: 1px; font-weight: 700; display: none; }
+.live-badge.show { display: inline; }
+#chatBody { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--scroll) transparent; min-height: 0; }
+.chat-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--dim); }
+.cat { font-size: 11px; color: var(--border-br); line-height: 1.5; white-space: pre; text-align: center; }
+#messages { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 
-  /* ── Chat input ── */
-  .chat-input-area {
-    flex-shrink: 0;
-    border-top: 1px solid var(--border);
-    background: var(--panel2);
-    padding: 10px 14px;
-    display: none;
-    gap: 8px;
-    align-items: flex-end;
-  }
-  .chat-input-area.visible { display: flex; }
-  .chat-input-wrap { flex: 1; position: relative; }
-  #chatInput {
-    width: 100%;
-    background: var(--input-bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    font-family: inherit;
-    font-size: 13px;
-    padding: 8px 12px;
-    resize: none;
-    min-height: 38px;
-    max-height: 120px;
-    outline: none;
-    transition: border-color 0.15s;
-    line-height: 1.5;
-  }
-  #chatInput:focus { border-color: var(--border-br); }
-  #chatInput::placeholder { color: var(--dim); }
-  .send-btn {
-    background: var(--gold);
-    color: #000;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 14px;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-    flex-shrink: 0;
-    height: 38px;
-  }
-  .send-btn:hover { background: #ffd43b; }
-  .send-btn:active { transform: scale(0.97); }
-  .send-btn:disabled { background: #555; color: #888; cursor: not-allowed; }
+/* Messages */
+.msg { border-radius: var(--radius); word-break: break-word; font-size: var(--font-size); animation: fadeIn 0.2s ease; overflow: hidden; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.msg-header { display: flex; align-items: center; gap: 6px; padding: 8px 14px 0; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+.msg-body { padding: 6px 14px 12px; line-height: 1.65; }
+.msg-user { background: #111f34; border: 1px solid #f5c84216; border-left: 2px solid var(--gold); }
+.msg-user .msg-header { color: var(--gold-dim); }
+.msg-user .msg-body { white-space: pre-wrap; }
+.msg-assistant { background: #0c1825; border: 1px solid var(--border); border-left: 2px solid var(--blue); }
+.msg-assistant .msg-header { color: var(--blue); }
 
-  /* ── Status panel ── */
-  .status-section {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
-  }
-  .status-label {
-    font-size: 10px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--dim);
-    margin-bottom: 8px;
-  }
-  .model-badge {
-    background: #2a529818;
-    border: 1px solid var(--border-br);
-    border-radius: 4px;
-    padding: 6px 10px;
-    color: var(--gold);
-    font-size: 12px;
-    word-break: break-all;
-  }
-  .provider-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 0;
-    border-bottom: 1px solid #2a529818;
-  }
-  .provider-row:last-child { border-bottom: none; }
-  .provider-dot {
-    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
-    transition: box-shadow 0.3s;
-  }
-  .provider-dot.on  { background: var(--green); box-shadow: 0 0 5px var(--green); }
-  .provider-dot.off { background: #2a3a4a; }
-  .provider-name { flex: 1; color: var(--text); }
-  .provider-name.off { color: var(--dim); }
-  .provider-key { font-size: 10px; color: var(--dim); }
+/* Markdown */
+.md-h1 { font-size: 15px; font-weight: 700; color: var(--text); display: block; margin: 8px 0 4px; }
+.md-h2 { font-size: 14px; font-weight: 700; color: var(--gold); display: block; margin: 6px 0 3px; }
+.md-h3 { font-size: 13px; font-weight: 700; color: var(--blue); display: block; margin: 5px 0 2px; }
+.ic { background: #142030; border: 1px solid var(--border-br); border-radius: 3px; padding: 1px 5px; font-size: 12px; color: #74c7f5; font-family: inherit; }
+.code-block-wrap { background: #050d18; border: 1px solid var(--border); border-radius: var(--radius); margin: 8px 0; overflow: hidden; }
+.code-lang { display: block; padding: 3px 12px; font-size: 10px; color: var(--dim); background: var(--panel); border-bottom: 1px solid var(--border); letter-spacing: 1px; text-transform: uppercase; }
+.code-block { margin: 0; padding: 12px; overflow-x: auto; font-size: 12px; line-height: 1.5; color: var(--text); white-space: pre; font-family: inherit; scrollbar-width: thin; scrollbar-color: var(--scroll) transparent; }
+.md-li { display: block; padding-left: 14px; margin: 2px 0; }
 
-  .refresh-btn {
-    width: 100%;
-    padding: 7px;
-    background: #2a529820;
-    border: 1px solid var(--border);
-    color: var(--blue);
-    cursor: pointer;
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 11px;
-    letter-spacing: 1px;
-    margin-top: 10px;
-    transition: background 0.15s;
-  }
-  .refresh-btn:hover { background: #2a529840; }
+/* Tool cards */
+.tool-card { margin: 4px 14px 6px; border: 1px solid #2a529844; border-radius: var(--radius); overflow: hidden; }
+.tool-card-hdr { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: #0e1f35; cursor: pointer; user-select: none; transition: background 0.1s; }
+.tool-card-hdr:hover { background: #152940; }
+.tool-icon { color: var(--orange); font-size: 11px; }
+.tool-name { color: var(--orange); font-weight: 600; flex: 1; font-size: 12px; }
+.tool-toggle { color: var(--dim); font-size: 10px; }
+.tool-card-body { padding: 10px; background: var(--input-bg); border-top: 1px solid #2a529828; color: var(--dim2); font-size: 11px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; display: none; max-height: 200px; overflow-y: auto; scrollbar-width: thin; }
+.tool-card-body.open { display: block; }
 
-  /* scrollbar */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--scroll); border-radius: 2px; }
+/* Thinking */
+.thinking-wrap { padding: 6px 16px; display: none; }
+.thinking-wrap.show { display: flex; align-items: center; gap: 8px; }
+.thinking-dots { display: flex; gap: 4px; }
+.thinking-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--blue); animation: blink 1.2s infinite ease-in-out; }
+.thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+.thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%,80%,100% { opacity: 0.15; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1.1); } }
+.thinking-text { color: var(--dim2); font-size: 12px; }
+
+/* Chat input */
+.chat-input-area { flex-shrink: 0; border-top: 1px solid var(--border); background: var(--panel2); padding: 10px 14px; gap: 8px; align-items: flex-end; display: none; }
+.chat-input-area.visible { display: flex; }
+#chatInput { flex: 1; background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: inherit; font-size: 13px; padding: 8px 12px; resize: none; min-height: 38px; max-height: 120px; outline: none; transition: border-color 0.15s; line-height: 1.5; }
+#chatInput:focus { border-color: var(--border-br); }
+#chatInput::placeholder { color: var(--dim); }
+.send-btn { background: var(--gold); color: #000; border: none; border-radius: var(--radius); padding: 8px 16px; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; height: 38px; flex-shrink: 0; transition: background 0.15s, transform 0.1s; }
+.send-btn:hover { background: #ffd43b; }
+.send-btn:active { transform: scale(0.97); }
+.readonly-notice { flex-shrink: 0; border-top: 1px solid var(--border); padding: 9px 16px; color: var(--orange); font-size: 11px; display: none; align-items: center; gap: 6px; background: #fb923c08; }
+.readonly-notice.show { display: flex; }
+
+/* Right status panel */
+.status-panel { width: 220px; flex-shrink: 0; display: flex; flex-direction: column; overflow: hidden; }
+.status-scroll { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--scroll) transparent; }
+.sp-section { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.sp-title { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; }
+.model-badge { background: var(--panel2); border: 1px solid var(--border-br); border-radius: var(--radius); padding: 6px 10px; color: var(--gold); font-size: 12px; word-break: break-all; }
+.prov-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border)22; }
+.prov-row:last-child { border-bottom: none; }
+.prov-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.prov-dot.on { background: var(--green); box-shadow: 0 0 5px var(--green); }
+.prov-dot.off { background: #1a2535; }
+.prov-name { flex: 1; font-size: 12px; }
+.prov-name.off { color: var(--dim); }
+.prov-key { font-size: 10px; color: var(--dim); }
+.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border)22; font-size: 12px; }
+.stat-row:last-child { border-bottom: none; }
+.stat-lbl { color: var(--dim); }
+.stat-val { color: var(--text); }
+.refresh-btn { width: 100%; padding: 7px; background: var(--panel2); border: 1px solid var(--border); color: var(--blue); cursor: pointer; border-radius: var(--radius); font-family: inherit; font-size: 11px; letter-spacing: 1px; margin-top: 10px; transition: background 0.15s; }
+.refresh-btn:hover { background: var(--panel3); }
+
+/* ── Inner page layout (non-overview) ── */
+.inner-page { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--scroll) transparent; padding: 24px; }
+.inner-page h2 { font-size: 16px; color: var(--gold); font-weight: 700; margin-bottom: 4px; letter-spacing: 0.5px; }
+.inner-page .page-sub { color: var(--dim); font-size: 12px; margin-bottom: 24px; }
+
+/* Cards */
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+.card-hdr { padding: 10px 16px; background: var(--panel2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim2); }
+.card-body { padding: 16px; }
+
+/* ── AI & Models page ── */
+.provider-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.prov-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.prov-card-hdr { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--panel2); border-bottom: 1px solid var(--border); }
+.prov-badge { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; color: var(--dim2); flex: 1; }
+.prov-status-dot { width: 7px; height: 7px; border-radius: 50%; }
+.prov-status-dot.on { background: var(--green); box-shadow: 0 0 5px var(--green); }
+.prov-status-dot.off { background: var(--dim); }
+.prov-card-models { padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+.model-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: var(--radius);
+  border: 1px solid transparent; background: none;
+  color: var(--text); font-family: inherit; font-size: 12px;
+  cursor: pointer; text-align: left; transition: all 0.15s;
+}
+.model-btn:hover { background: var(--panel3); border-color: var(--border-br); }
+.model-btn.current { background: #2a529820; border-color: var(--blue); }
+.model-btn.current .model-active-badge { display: block; }
+.model-active-badge {
+  display: none; margin-left: auto;
+  background: var(--blue); color: #000;
+  font-size: 9px; padding: 1px 6px; border-radius: 10px;
+  font-weight: 700; letter-spacing: 0.5px; white-space: nowrap;
+}
+.model-btn.unconfigured { opacity: 0.4; cursor: not-allowed; }
+.model-btn.unconfigured:hover { background: none; border-color: transparent; }
+.model-name-text { flex: 1; }
+
+/* ── Usage page ── */
+.usage-session-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border)55; transition: background 0.1s; cursor: pointer; }
+.usage-session-item:hover { background: var(--panel2); }
+.usage-session-item:last-child { border-bottom: none; }
+.usage-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.usage-dot.live { background: var(--green); box-shadow: 0 0 5px var(--green); }
+.usage-dot.past { background: var(--dim); }
+.usage-info { flex: 1; min-width: 0; }
+.usage-summary { font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usage-meta { font-size: 10px; color: var(--dim); margin-top: 3px; }
+.usage-time { font-size: 11px; color: var(--dim2); flex-shrink: 0; }
+
+/* ── Appearance page ── */
+.appearance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 600px; }
+.ap-item { display: flex; flex-direction: column; gap: 8px; }
+.ap-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }
+.ap-desc { font-size: 11px; color: var(--dim); margin-top: -4px; }
+.ap-swatch { display: flex; align-items: center; gap: 8px; }
+.ap-swatch input[type=color] { width: 36px; height: 28px; border: 1px solid var(--border); border-radius: 4px; background: none; cursor: pointer; padding: 2px; }
+.ap-swatch span { font-size: 12px; color: var(--dim2); font-family: inherit; }
+.ap-slider { display: flex; align-items: center; gap: 10px; }
+.ap-slider input[type=range] { flex: 1; accent-color: var(--blue); }
+.ap-slider span { font-size: 12px; color: var(--dim2); min-width: 32px; }
+.preview-box { margin-top: 16px; padding: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); max-width: 600px; }
+.preview-box .msg-user { border-left: 2px solid var(--gold); background: #111f34; padding: 8px 14px; border-radius: var(--radius); margin-bottom: 8px; font-size: var(--font-size); }
+.preview-box .msg-assistant { border-left: 2px solid var(--blue); background: #0c1825; padding: 8px 14px; border-radius: var(--radius); font-size: var(--font-size); }
+
+/* ── Settings page ── */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 740px; }
+.setting-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); }
+.setting-label { font-size: 13px; color: var(--text); }
+.setting-desc { font-size: 11px; color: var(--dim); margin-top: 3px; }
+.toggle-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 20px;
+  font-family: inherit; font-size: 11px; font-weight: 600;
+  cursor: pointer; border: 1px solid; transition: all 0.2s;
+  white-space: nowrap;
+}
+.toggle-btn.on { background: #34e8a022; border-color: var(--green); color: var(--green); }
+.toggle-btn.off { background: #ff6b7a22; border-color: var(--red); color: var(--red); }
+.cmds-table { width: 100%; border-collapse: collapse; font-size: 12px; max-width: 740px; }
+.cmds-table th { text-align: left; padding: 8px 12px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--border); }
+.cmds-table td { padding: 9px 12px; border-bottom: 1px solid var(--border)44; vertical-align: top; }
+.cmds-table tr:last-child td { border-bottom: none; }
+.cmds-table tr:hover td { background: var(--panel2); }
+.cmd-name { color: var(--gold); font-weight: 600; white-space: nowrap; }
+.cmd-desc { color: var(--dim2); }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scroll); border-radius: 2px; }
 </style>
 </head>
 <body>
 
+<!-- ── Header ── -->
 <header>
-  <div class="logo">◈ Intelligence360 <span>Command Center</span></div>
+  <div class="logo">◈ Intelligence360 <span class="logo-sub">Command Center</span></div>
+  <div class="hdivider"></div>
+
+  <div class="session-picker" id="sessionPicker">
+    <button class="sp-btn" id="spBtn" onclick="toggleDropdown()">
+      <div class="sp-dot past" id="spDot"></div>
+      <span class="sp-text" id="spText">No session</span>
+      <span class="sp-arrow">▾</span>
+    </button>
+    <div class="session-dropdown" id="sessionDropdown">
+      <div class="sd-hdr">Sessions</div>
+      <div id="sdList"><div style="padding:12px;color:var(--dim);font-size:12px">Loading…</div></div>
+      <button class="sd-more" id="sdMore" style="display:none" onclick="loadMoreSessions()">↓ Load more</button>
+    </div>
+  </div>
+
   <div class="header-right">
+    <div class="readonly-badge" id="readonlyBadge">● read-only</div>
     <div class="model-pill" id="modelPill">—</div>
-    <div style="display:flex;align-items:center;gap:6px">
+    <div class="ws-wrap">
       <div class="ws-dot" id="wsDot"></div>
       <span class="ws-label" id="wsLabel">connecting…</span>
     </div>
   </div>
 </header>
 
-<div class="layout">
+<!-- ── Nav bar ── -->
+<nav class="nav-bar">
+  <button class="nav-tab active" onclick="showPage('overview',this)">Overview</button>
+  <button class="nav-tab" onclick="showPage('models',this)">AI &amp; Models</button>
+  <button class="nav-tab" onclick="showPage('usage',this)">Usage</button>
+  <button class="nav-tab" onclick="showPage('appearance',this)">Appearance</button>
+  <button class="nav-tab" onclick="showPage('settings',this)">Settings</button>
+</nav>
 
-  <!-- Sessions -->
-  <div class="panel">
-    <div class="panel-title">◈ Sessions</div>
-    <div class="panel-body" id="sessionList">
-      <div style="padding:20px;color:var(--dim);font-size:12px">Loading…</div>
-    </div>
-  </div>
-
-  <!-- Chat -->
-  <div class="panel chat-panel">
-    <div class="panel-title" id="chatTitle">
-      ◈ Chat
+<!-- ══════════════════ OVERVIEW ══════════════════ -->
+<div id="page-overview" class="page active">
+  <div class="chat-panel">
+    <div class="chat-bar">
+      <span id="chatBarText">◈ Chat</span>
       <span class="live-badge" id="liveBadge">LIVE</span>
     </div>
     <div id="chatBody">
@@ -364,205 +354,434 @@
  ( ==  ◡  == )
   )  ~~~~~  (
  (__(__)___(__)__)</pre>
-        <span>Select a session to view</span>
+        <span>Select a session above</span>
       </div>
+    </div>
+    <div class="thinking-wrap" id="thinkingIndicator">
+      <div class="thinking-dots"><span></span><span></span><span></span></div>
+      <span class="thinking-text">Intelligence360 is thinking…</span>
     </div>
     <div class="chat-input-area" id="chatInputArea">
-      <div class="chat-input-wrap">
-        <textarea id="chatInput" rows="1" placeholder="Send a message to the CLI…"></textarea>
-      </div>
-      <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+      <textarea id="chatInput" rows="1" placeholder="Send a message to the CLI…"></textarea>
+      <button class="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+    <div class="readonly-notice" id="readonlyNotice">
+      <span>◈</span> Past session — view only
     </div>
   </div>
 
-  <!-- Status -->
-  <div class="panel">
-    <div class="panel-title">◈ Status</div>
-    <div class="panel-body">
-
-      <div class="status-section">
-        <div class="status-label">Active Model</div>
+  <div class="status-panel">
+    <div class="status-scroll">
+      <div class="sp-section" style="background:var(--panel2)">
+        <div class="sp-title" style="margin:0">◈ Status</div>
+      </div>
+      <div class="sp-section">
+        <div class="sp-title">Active Model</div>
         <div class="model-badge" id="modelBadge">—</div>
       </div>
-
-      <div class="status-section">
-        <div class="status-label">Providers</div>
-        <div id="providerList">
-          <div style="color:var(--dim);font-size:12px">Loading…</div>
-        </div>
+      <div class="sp-section">
+        <div class="sp-title">Providers</div>
+        <div id="providerList"><div style="color:var(--dim);font-size:12px">Loading…</div></div>
       </div>
-
+      <div class="sp-section" id="sessionStats" style="display:none">
+        <div class="sp-title">Session</div>
+        <div id="sessionStatsList"></div>
+      </div>
       <div style="padding:12px 14px">
-        <button class="refresh-btn" onclick="loadStatus()">⟳ Refresh Status</button>
+        <button class="refresh-btn" onclick="doRefresh()">⟳ Refresh</button>
       </div>
-
     </div>
   </div>
+</div>
 
+<!-- ══════════════════ AI & MODELS ══════════════════ -->
+<div id="page-models" class="page">
+  <div class="inner-page">
+    <h2>AI &amp; Models</h2>
+    <div class="page-sub">Select a model to switch Intelligence360 to it. Green dot = API key configured.</div>
+
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-hdr"><span class="card-title">Current Model</span></div>
+      <div class="card-body" style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:15px;color:var(--gold);font-weight:700" id="currentModelLabel">—</div>
+        <div style="color:var(--dim);font-size:11px">Active in this session</div>
+      </div>
+    </div>
+
+    <div class="provider-grid" id="modelGrid">
+      <div style="color:var(--dim);font-size:12px">Loading providers…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ USAGE ══════════════════ -->
+<div id="page-usage" class="page">
+  <div class="inner-page">
+    <h2>Usage</h2>
+    <div class="page-sub">All conversation sessions, sorted by most recent.</div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">Sessions</span>
+        <span id="usageSessionCount" style="font-size:11px;color:var(--dim2)">—</span>
+      </div>
+      <div id="usageSessionList" style="min-height:60px">
+        <div style="padding:16px;color:var(--dim);font-size:12px">Loading…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ APPEARANCE ══════════════════ -->
+<div id="page-appearance" class="page">
+  <div class="inner-page">
+    <h2>Appearance</h2>
+    <div class="page-sub">Customize colors and font size. Settings are saved in your browser.</div>
+
+    <div class="card" style="max-width:600px;margin-bottom:16px">
+      <div class="card-hdr"><span class="card-title">Colors</span><button class="refresh-btn" style="width:auto;margin:0;padding:4px 12px;font-size:10px" onclick="resetAppearance()">Reset defaults</button></div>
+      <div class="card-body">
+        <div class="appearance-grid">
+          <div class="ap-item">
+            <div class="ap-label">Accent Blue</div>
+            <div class="ap-swatch">
+              <input type="color" id="ap-blue" value="#4dabf7" oninput="applyColor('--blue',this.value,'ap-blue')">
+              <span id="ap-blue-val">#4dabf7</span>
+            </div>
+          </div>
+          <div class="ap-item">
+            <div class="ap-label">Gold</div>
+            <div class="ap-swatch">
+              <input type="color" id="ap-gold" value="#f5c842" oninput="applyColor('--gold',this.value,'ap-gold')">
+              <span id="ap-gold-val">#f5c842</span>
+            </div>
+          </div>
+          <div class="ap-item">
+            <div class="ap-label">Background</div>
+            <div class="ap-swatch">
+              <input type="color" id="ap-bg" value="#09111e" oninput="applyColor('--bg',this.value,'ap-bg')">
+              <span id="ap-bg-val">#09111e</span>
+            </div>
+          </div>
+          <div class="ap-item">
+            <div class="ap-label">Panel</div>
+            <div class="ap-swatch">
+              <input type="color" id="ap-panel" value="#0e1928" oninput="applyColor('--panel',this.value,'ap-panel')">
+              <span id="ap-panel-val">#0e1928</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:600px;margin-bottom:20px">
+      <div class="card-hdr"><span class="card-title">Font Size</span></div>
+      <div class="card-body">
+        <div class="ap-slider">
+          <input type="range" min="11" max="16" value="13" id="ap-fontsize" oninput="applyFontSize(this.value)">
+          <span id="ap-fontsize-val">13px</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-sub" style="margin-bottom:12px">Preview</div>
+    <div class="preview-box">
+      <div class="msg-user">▶ You — Hey, can you help me write a Python script?</div>
+      <div class="msg-assistant">◈ Intelligence360 — Sure! Here's a basic example:<br><code class="ic">print("Hello, world!")</code></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ SETTINGS ══════════════════ -->
+<div id="page-settings" class="page">
+  <div class="inner-page">
+    <h2>Settings</h2>
+    <div class="page-sub">Configure Intelligence360 behavior for this session.</div>
+
+    <div class="settings-grid" style="margin-bottom:24px">
+      <div class="setting-item">
+        <div>
+          <div class="setting-label">Auto-Permissions</div>
+          <div class="setting-desc">Skip tool confirmation prompts</div>
+        </div>
+        <button class="toggle-btn on" id="autoPermBtn" onclick="toggleAutoPerms()">⚡ ON</button>
+      </div>
+      <div class="setting-item">
+        <div>
+          <div class="setting-label">Dashboard Poll Rate</div>
+          <div class="setting-desc">How often to sync messages</div>
+        </div>
+        <select id="pollRateSelect" onchange="changePollRate(this.value)" style="background:var(--panel2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:12px;padding:5px 10px;border-radius:var(--radius);cursor:pointer">
+          <option value="1000">1s</option>
+          <option value="1500" selected>1.5s</option>
+          <option value="2000">2s</option>
+          <option value="3000">3s</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">Slash Commands Reference</span></div>
+      <div style="overflow-x:auto">
+        <table class="cmds-table">
+          <thead><tr><th>Command</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td class="cmd-name">/model</td><td class="cmd-desc">Switch AI model / provider interactively</td></tr>
+            <tr><td class="cmd-name">/autosuper</td><td class="cmd-desc">Toggle auto-permissions on/off for this session</td></tr>
+            <tr><td class="cmd-name">/saveskill &lt;name&gt;</td><td class="cmd-desc">Save current technique as a reusable skill</td></tr>
+            <tr><td class="cmd-name">/refreshskills</td><td class="cmd-desc">Rebuild global skills index in ~/.claude/CLAUDE.md</td></tr>
+            <tr><td class="cmd-name">/clear</td><td class="cmd-desc">Clear conversation history</td></tr>
+            <tr><td class="cmd-name">/compact</td><td class="cmd-desc">Compact conversation to save context</td></tr>
+            <tr><td class="cmd-name">/cost</td><td class="cmd-desc">Show token usage and cost for this session</td></tr>
+            <tr><td class="cmd-name">/help</td><td class="cmd-desc">Show all available commands</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-hdr"><span class="card-title">About</span></div>
+      <div class="card-body" style="display:flex;gap:24px;flex-wrap:wrap">
+        <div class="stat-row" style="flex-direction:column;align-items:flex-start;gap:4px;border:none;padding:0">
+          <div class="stat-lbl">Version</div>
+          <div class="stat-val">Intelligence360 CLI</div>
+        </div>
+        <div class="stat-row" style="flex-direction:column;align-items:flex-start;gap:4px;border:none;padding:0">
+          <div class="stat-lbl">Dashboard</div>
+          <div class="stat-val">Multi-model · Skills Library</div>
+        </div>
+        <div class="stat-row" style="flex-direction:column;align-items:flex-start;gap:4px;border:none;padding:0">
+          <div class="stat-lbl">Config</div>
+          <div class="stat-val">~/.intelligence360.env</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-  let ws, activeProject, activeSession
+  // ── State ──────────────────────────────────────────────────────────────────
+  let ws
+  let activeSessionId = null
+  let currentSessionId = null
+  let currentProject = null
   let allSessions = []
-  let shownCount = 3
+  let shownCount = 8
   let renderedMsgCount = 0
   let pollTimer = null
-  const PAGE_SIZE = 3
+  let pollInterval = 1500
+  let currentModel = '—'
+  let configuredProviders = new Set()
+  const PAGE_SIZE = 8
+
+  const MODELS = {
+    Claude:   { key: 'ANTHROPIC_API_KEY',  list: ['claude-opus-4-6', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'] },
+    OpenAI:   { key: 'OPENAI_API_KEY',     list: ['gpt-4o', 'gpt-4o-mini', 'o1', 'o3-mini'] },
+    Gemini:   { key: 'GEMINI_API_KEY',     list: ['gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'] },
+    Grok:     { key: 'GROK_API_KEY',       list: ['grok-3', 'grok-3-mini', 'grok-2'] },
+    DeepSeek: { key: 'DEEPSEEK_API_KEY',   list: ['deepseek-chat', 'deepseek-reasoner'] },
+    Qwen:     { key: 'QWEN_API_KEY',       list: ['qwen-max', 'qwen-plus', 'qwen-turbo'] },
+    Llama:    { key: 'GROQ_API_KEY',       list: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'] },
+    GLM:      { key: 'GLM_API_KEY',        list: ['glm-4-plus', 'glm-4-air', 'glm-4-flash'] },
+  }
+
+  // ── Navigation ─────────────────────────────────────────────────────────────
+  function showPage(id, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'))
+    document.getElementById('page-' + id).classList.add('active')
+    if (btn) btn.classList.add('active')
+    if (id === 'models') renderModelGrid()
+    if (id === 'usage') renderUsagePage()
+  }
 
   // ── WebSocket ──────────────────────────────────────────────────────────────
   function connect() {
     ws = new WebSocket(`ws://${location.host}`)
     const dot = document.getElementById('wsDot')
     const label = document.getElementById('wsLabel')
-
-    ws.onopen = () => {
-      dot.classList.add('connected')
-      label.textContent = 'live'
-    }
+    ws.onopen = () => { dot.classList.add('connected'); label.textContent = 'live' }
     ws.onclose = () => {
-      dot.classList.remove('connected')
-      label.textContent = 'disconnected'
+      dot.classList.remove('connected'); label.textContent = 'disconnected'
       setTimeout(connect, 2000)
     }
     ws.onmessage = ({ data }) => {
       const ev = JSON.parse(data)
-      if (ev.type === 'connected') {
-        updateModel(ev.model)
-        loadSessions()
-        loadStatus()
-      }
-      if (ev.type === 'message' && ev.entry) {
-        const role = ev.entry.type
-        if (role === 'user' || role === 'assistant') {
-          appendMessage(role, extractText(ev.entry))
-        }
-      }
+      if (ev.type === 'connected') { updateModel(ev.model); loadSessions(); loadStatus() }
+      if (ev.type === 'message') pollMessages()
+      if (ev.type === 'thinking') setThinking(ev.active)
       if (ev.type === 'model') updateModel(ev.model)
     }
   }
 
   function updateModel(model) {
-    const m = model || '—'
-    document.getElementById('modelBadge').textContent = m
-    document.getElementById('modelPill').textContent = m
-  }
-
-  function extractText(entry) {
-    const msg = entry.message || {}
-    const content = msg.content
-    if (typeof content === 'string') return content
-    if (Array.isArray(content)) {
-      return content.filter(b => b.type === 'text').map(b => b.text || '').join('\n').trim()
-    }
-    return ''
+    currentModel = model || '—'
+    document.getElementById('modelBadge').textContent = currentModel
+    document.getElementById('modelPill').textContent = currentModel
+    document.getElementById('currentModelLabel').textContent = currentModel
+    // Refresh model grid active state
+    document.querySelectorAll('.model-btn').forEach(b => {
+      b.classList.toggle('current', b.dataset.model === currentModel)
+    })
   }
 
   // ── Sessions ───────────────────────────────────────────────────────────────
   async function loadSessions() {
-    const res = await fetch('/api/sessions')
-    allSessions = await res.json()
-    shownCount = PAGE_SIZE
-    renderSessionList()
+    const [sRes, aRes] = await Promise.all([fetch('/api/sessions'), fetch('/api/active-session')])
+    allSessions = await sRes.json()
+    const active = await aRes.json()
+    activeSessionId = active?.id ?? null
+    renderDropdown()
+    if (!currentSessionId && activeSessionId) {
+      const s = allSessions.find(s => s.id === activeSessionId)
+      if (s) loadSession(s.project, s.id)
+    }
   }
 
-  function renderSessionList() {
-    const list = document.getElementById('sessionList')
+  function renderDropdown() {
+    const list = document.getElementById('sdList')
+    const more = document.getElementById('sdMore')
     if (!allSessions.length) {
-      list.innerHTML = '<div style="padding:20px;color:var(--dim);font-size:12px">No sessions yet</div>'
+      list.innerHTML = '<div style="padding:12px;color:var(--dim);font-size:12px">No sessions yet</div>'
+      more.style.display = 'none'
       return
     }
-    const visible = allSessions.slice(0, shownCount)
-    let html = visible.map(s => `
-      <div class="session-item ${s.id === activeSession ? 'active' : ''}"
-           onclick="loadSession('${esc(s.project)}','${esc(s.id)}')">
-        <div class="session-id">${esc(s.id.slice(0,8))}…</div>
-        <div class="session-summary">${esc(s.summary || '(empty)')}</div>
-        <div class="session-time">${timeAgo(s.modified)}</div>
-      </div>
-    `).join('')
-    if (shownCount < allSessions.length) {
-      const remaining = allSessions.length - shownCount
-      html += `<button class="load-more-btn" onclick="loadMoreSessions()">
-        ↓ Show ${Math.min(PAGE_SIZE, remaining)} more (${remaining} left)
-      </button>`
-    }
-    list.innerHTML = html
+    list.innerHTML = allSessions.slice(0, shownCount).map(s => `
+      <div class="sd-item ${s.id === currentSessionId ? 'sel' : ''}"
+           onclick="loadSession('${ea(s.project)}','${ea(s.id)}');closeDropdown()">
+        <div class="sd-dot ${s.id === activeSessionId ? 'live' : 'past'}"></div>
+        <div class="sd-info">
+          <div class="sd-summary">${eh(s.summary || '(empty)')}</div>
+          <div class="sd-meta">${eh(s.id.slice(0,8))}… · ${timeAgo(s.modified)}</div>
+        </div>
+      </div>`).join('')
+    more.style.display = shownCount < allSessions.length ? 'block' : 'none'
   }
 
-  function loadMoreSessions() {
-    shownCount += PAGE_SIZE
-    renderSessionList()
-  }
+  function loadMoreSessions() { shownCount += PAGE_SIZE; renderDropdown() }
+  function toggleDropdown() { document.getElementById('sessionDropdown').classList.toggle('open') }
+  function closeDropdown() { document.getElementById('sessionDropdown').classList.remove('open') }
+  document.addEventListener('click', e => {
+    if (!document.getElementById('sessionPicker').contains(e.target)) closeDropdown()
+  })
 
   async function loadSession(project, sessionId) {
-    activeProject = project
-    activeSession = sessionId
-    renderedMsgCount = 0
-
-    document.getElementById('chatTitle').innerHTML =
-      `◈ ${esc(sessionId.slice(0,8))}… <span class="live-badge show" id="liveBadge">LIVE</span>`
-    renderSessionList()
-
-    const body = document.getElementById('chatBody')
-    body.innerHTML = '<div id="messages"></div>'
-    body.style.overflowY = 'auto'
-    document.getElementById('chatInputArea').classList.add('visible')
-
-    await pollMessages()
-    startPolling()
+    currentProject = project; currentSessionId = sessionId; renderedMsgCount = 0
+    const sess = allSessions.find(s => s.id === sessionId)
+    const isActive = sessionId === activeSessionId
+    document.getElementById('spDot').className = `sp-dot ${isActive ? 'live' : 'past'}`
+    document.getElementById('spText').textContent = sess?.summary?.slice(0, 36) || sessionId.slice(0,8) + '…'
+    document.getElementById('chatBarText').textContent = `◈ ${sessionId.slice(0,8)}…`
+    document.getElementById('liveBadge').className = `live-badge${isActive ? ' show' : ''}`
+    document.getElementById('chatInputArea').className = `chat-input-area${isActive ? ' visible' : ''}`
+    document.getElementById('readonlyNotice').className = `readonly-notice${!isActive ? ' show' : ''}`
+    document.getElementById('readonlyBadge').className = `readonly-badge${!isActive ? ' show' : ''}`
+    document.getElementById('chatBody').innerHTML = '<div id="messages"></div>'
+    setThinking(false); renderDropdown()
+    if (sess) {
+      document.getElementById('sessionStats').style.display = 'block'
+      document.getElementById('sessionStatsList').innerHTML = `
+        <div class="stat-row"><span class="stat-lbl">Last active</span><span class="stat-val">${timeAgo(sess.modified)}</span></div>
+        <div class="stat-row"><span class="stat-lbl">Messages</span><span class="stat-val" id="msgCount">—</span></div>`
+    }
+    await pollMessages(); startPolling()
   }
 
-  // ── Poll-based real-time sync ──────────────────────────────────────────────
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer)
-    pollTimer = setInterval(pollMessages, 1500)
+    pollTimer = setInterval(pollMessages, pollInterval)
   }
 
   async function pollMessages() {
-    if (!activeProject || !activeSession) return
+    if (!currentProject || !currentSessionId) return
     try {
-      const res = await fetch(`/api/session/${encodeURIComponent(activeProject)}/${encodeURIComponent(activeSession)}?watch=1`)
-      const messages = await res.json()
-      // Only append messages we haven't rendered yet
-      if (messages.length > renderedMsgCount) {
-        const newMsgs = messages.slice(renderedMsgCount)
-        for (const m of newMsgs) appendMessage(m.role, m.text)
-        renderedMsgCount = messages.length
+      const res = await fetch(`/api/session/${encodeURIComponent(currentProject)}/${encodeURIComponent(currentSessionId)}?watch=1`)
+      const msgs = await res.json()
+      if (msgs.length > renderedMsgCount) {
+        for (const m of msgs.slice(renderedMsgCount)) appendMessage(m)
+        renderedMsgCount = msgs.length
+        const el = document.getElementById('msgCount')
+        if (el) el.textContent = renderedMsgCount
       }
     } catch {}
   }
 
-  function appendMessage(role, text) {
-    if (!text.trim()) return
+  function setThinking(active) {
+    const el = document.getElementById('thinkingIndicator')
+    if (el) el.className = `thinking-wrap${active ? ' show' : ''}`
+    if (active) document.getElementById('chatBody').scrollTop = 999999
+  }
+
+  function appendMessage(m) {
+    if (!m.text && (!m.toolCalls || !m.toolCalls.length)) return
     const container = document.getElementById('messages')
     if (!container) return
     const div = document.createElement('div')
-    div.className = `msg msg-${role}`
-    div.innerHTML = `<div class="msg-role">${role === 'user' ? '▶ You' : '◈ Intelligence360'}</div>${esc(text)}`
+    div.className = `msg msg-${m.role}`
+    const label = m.role === 'user' ? '▶ You' : '◈ Intelligence360'
+    let html = `<div class="msg-header">${label}</div>`
+    if (m.text) html += `<div class="msg-body">${m.role === 'assistant' ? mdRender(m.text) : eh(m.text)}</div>`
+    if (m.toolCalls?.length) {
+      for (const tc of m.toolCalls) {
+        const id = 'tc' + Math.random().toString(36).slice(2)
+        const inp = typeof tc.input === 'object' ? JSON.stringify(tc.input, null, 2) : String(tc.input ?? '')
+        html += `<div class="tool-card">
+          <div class="tool-card-hdr" onclick="toggleTool('${id}')">
+            <span class="tool-icon">⚡</span><span class="tool-name">${eh(tc.name)}</span>
+            <span class="tool-toggle" id="${id}a">▸ expand</span>
+          </div>
+          <div class="tool-card-body" id="${id}">${eh(inp)}</div>
+        </div>`
+      }
+    }
+    div.innerHTML = html
     container.appendChild(div)
     document.getElementById('chatBody').scrollTop = 999999
   }
 
-  // ── Send message to CLI ────────────────────────────────────────────────────
+  function toggleTool(id) {
+    const b = document.getElementById(id), a = document.getElementById(id + 'a')
+    if (!b) return
+    b.classList.toggle('open')
+    a.textContent = b.classList.contains('open') ? '▾ collapse' : '▸ expand'
+  }
+
+  // ── Markdown renderer ──────────────────────────────────────────────────────
+  function mdRender(raw) {
+    const blocks = []
+    let s = raw.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+      const i = blocks.length; blocks.push({ lang: lang || '', code }); return `\x00${i}\x00`
+    })
+    s = eh(s)
+    s = s.replace(/`([^`\n]+?)`/g, '<code class="ic">$1</code>')
+    s = s.replace(/^### (.+)$/gm, '<span class="md-h3">$1</span>')
+    s = s.replace(/^## (.+)$/gm, '<span class="md-h2">$1</span>')
+    s = s.replace(/^# (.+)$/gm, '<span class="md-h1">$1</span>')
+    s = s.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>')
+    s = s.replace(/^[ \t]*[-*] (.+)$/gm, '<span class="md-li">• $1</span>')
+    s = s.replace(/\n/g, '<br>')
+    s = s.replace(/\x00(\d+)\x00/g, (_, i) => {
+      const { lang, code } = blocks[+i]
+      const lb = lang ? `<span class="code-lang">${lang}</span>` : ''
+      return `<div class="code-block-wrap">${lb}<pre class="code-block"><code>${eh(code.trimEnd())}</code></pre></div>`
+    })
+    return s
+  }
+
+  // ── Send ───────────────────────────────────────────────────────────────────
   function sendMessage() {
     const input = document.getElementById('chatInput')
     const text = input.value.trim()
     if (!text || !ws || ws.readyState !== WebSocket.OPEN) return
     ws.send(JSON.stringify({ type: 'input', text }))
-    input.value = ''
-    input.style.height = 'auto'
-    input.focus()
+    input.value = ''; input.style.height = 'auto'; input.focus()
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    const input = document.getElementById('chatInput')
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
-    })
-    input.addEventListener('input', () => {
-      input.style.height = 'auto'
-      input.style.height = Math.min(input.scrollHeight, 120) + 'px'
-    })
+    const inp = document.getElementById('chatInput')
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } })
+    inp.addEventListener('input', () => { inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 120) + 'px' })
+    loadAppearance()
   })
 
   // ── Status ─────────────────────────────────────────────────────────────────
@@ -570,31 +789,144 @@
     const res = await fetch('/api/status')
     const { model, providers } = await res.json()
     updateModel(model)
+    configuredProviders = new Set(providers.filter(p => p.configured).map(p => p.key))
     document.getElementById('providerList').innerHTML = providers.map(p => `
-      <div class="provider-row">
-        <div class="provider-dot ${p.configured ? 'on' : 'off'}"></div>
-        <div class="provider-name ${p.configured ? '' : 'off'}">${esc(p.name)}</div>
-        <div class="provider-key">${p.configured ? '✓' : '✗'}</div>
-      </div>
-    `).join('')
+      <div class="prov-row">
+        <div class="prov-dot ${p.configured ? 'on' : 'off'}"></div>
+        <div class="prov-name ${p.configured ? '' : 'off'}">${eh(p.name)}</div>
+        <div class="prov-key">${p.configured ? '✓' : '✗'}</div>
+      </div>`).join('')
+  }
+
+  async function doRefresh() { await Promise.all([loadSessions(), loadStatus()]) }
+
+  // ── AI & Models page ───────────────────────────────────────────────────────
+  function renderModelGrid() {
+    const grid = document.getElementById('modelGrid')
+    grid.innerHTML = Object.entries(MODELS).map(([name, { key, list }]) => {
+      const configured = configuredProviders.has(key)
+      const modelBtns = list.map(m => `
+        <button class="model-btn ${m === currentModel ? 'current' : ''} ${!configured ? 'unconfigured' : ''}"
+                data-model="${eh(m)}"
+                onclick="${configured ? `setModel('${ea(m)}')` : 'void(0)'}">
+          <span class="model-name-text">${eh(m)}</span>
+          <span class="model-active-badge">ACTIVE</span>
+        </button>`).join('')
+      return `
+        <div class="prov-card">
+          <div class="prov-card-hdr">
+            <div class="prov-badge">${eh(name)}</div>
+            <div class="prov-status-dot ${configured ? 'on' : 'off'}" title="${configured ? 'API key configured' : 'Not configured'}"></div>
+          </div>
+          <div class="prov-card-models">${modelBtns}</div>
+        </div>`
+    }).join('')
+  }
+
+  function setModel(model) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return
+    ws.send(JSON.stringify({ type: 'set_model', model }))
+    updateModel(model)
+  }
+
+  // ── Usage page ─────────────────────────────────────────────────────────────
+  function renderUsagePage() {
+    const list = document.getElementById('usageSessionList')
+    const count = document.getElementById('usageSessionCount')
+    if (!allSessions.length) {
+      list.innerHTML = '<div style="padding:16px;color:var(--dim);font-size:12px">No sessions yet</div>'
+      count.textContent = '0 sessions'
+      return
+    }
+    count.textContent = `${allSessions.length} session${allSessions.length === 1 ? '' : 's'}`
+    list.innerHTML = allSessions.map(s => `
+      <div class="usage-session-item" onclick="goToSession('${ea(s.project)}','${ea(s.id)}')">
+        <div class="usage-dot ${s.id === activeSessionId ? 'live' : 'past'}"></div>
+        <div class="usage-info">
+          <div class="usage-summary">${eh(s.summary || '(empty session)')}</div>
+          <div class="usage-meta">${eh(s.id.slice(0,12))}… · ${eh(s.project)}</div>
+        </div>
+        <div class="usage-time">${timeAgo(s.modified)}</div>
+      </div>`).join('')
+  }
+
+  function goToSession(project, sessionId) {
+    loadSession(project, sessionId)
+    showPage('overview', document.querySelector('.nav-tab'))
+    document.querySelector('.nav-tab').classList.add('active')
+    document.querySelectorAll('.nav-tab').forEach((t, i) => { if (i !== 0) t.classList.remove('active') })
+  }
+
+  // ── Appearance ─────────────────────────────────────────────────────────────
+  const AP_DEFAULTS = { '--blue': '#4dabf7', '--gold': '#f5c842', '--bg': '#09111e', '--panel': '#0e1928' }
+  const AP_IDS = { '--blue': 'ap-blue', '--gold': 'ap-gold', '--bg': 'ap-bg', '--panel': 'ap-panel' }
+
+  function applyColor(varName, value, id) {
+    document.documentElement.style.setProperty(varName, value)
+    document.getElementById(id + '-val').textContent = value
+    saveAppearance()
+  }
+
+  function applyFontSize(val) {
+    document.documentElement.style.setProperty('--font-size', val + 'px')
+    document.getElementById('ap-fontsize-val').textContent = val + 'px'
+    document.getElementById('ap-fontsize').value = val
+    saveAppearance()
+  }
+
+  function saveAppearance() {
+    const data = {}
+    for (const [v, id] of Object.entries(AP_IDS)) data[v] = document.getElementById(id).value
+    data['--font-size'] = document.getElementById('ap-fontsize').value
+    localStorage.setItem('i360-appearance', JSON.stringify(data))
+  }
+
+  function loadAppearance() {
+    try {
+      const data = JSON.parse(localStorage.getItem('i360-appearance') || '{}')
+      for (const [v, id] of Object.entries(AP_IDS)) {
+        if (data[v]) { applyColor(v, data[v], id); document.getElementById(id).value = data[v] }
+      }
+      if (data['--font-size']) applyFontSize(data['--font-size'])
+    } catch {}
+  }
+
+  function resetAppearance() {
+    for (const [v, val] of Object.entries(AP_DEFAULTS)) {
+      applyColor(v, val, AP_IDS[v])
+      document.getElementById(AP_IDS[v]).value = val
+    }
+    applyFontSize(13)
+    localStorage.removeItem('i360-appearance')
+  }
+
+  // ── Settings ───────────────────────────────────────────────────────────────
+  let autoPermsOn = true
+
+  function toggleAutoPerms() {
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'toggle_autopermissions' }))
+    autoPermsOn = !autoPermsOn
+    const btn = document.getElementById('autoPermBtn')
+    btn.className = `toggle-btn ${autoPermsOn ? 'on' : 'off'}`
+    btn.textContent = autoPermsOn ? '⚡ ON' : '🔒 OFF'
+  }
+
+  function changePollRate(val) {
+    pollInterval = parseInt(val)
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = setInterval(pollMessages, pollInterval) }
   }
 
   // ── Utils ──────────────────────────────────────────────────────────────────
-  function esc(str) {
-    return String(str)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/\n/g,'<br>')
-  }
-
+  function eh(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+  function ea(s) { return String(s).replace(/'/g,"\\'") }
   function timeAgo(ms) {
-    const diff = Date.now() - ms
-    if (diff < 60000) return 'just now'
-    if (diff < 3600000) return `${Math.floor(diff/60000)}m ago`
-    if (diff < 86400000) return `${Math.floor(diff/3600000)}h ago`
-    return `${Math.floor(diff/86400000)}d ago`
+    const d = Date.now() - ms
+    if (d < 60000) return 'just now'
+    if (d < 3600000) return `${Math.floor(d/60000)}m ago`
+    if (d < 86400000) return `${Math.floor(d/3600000)}h ago`
+    return `${Math.floor(d/86400000)}d ago`
   }
 
-  // ── Start ──────────────────────────────────────────────────────────────────
   connect()
 </script>
 </body>

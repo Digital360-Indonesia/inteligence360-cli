@@ -82,7 +82,7 @@ function listSessions() {
 function getSessionMessages(project: string, sessionId: string) {
   const path = join(PROJECTS_DIR, project, `${sessionId}.jsonl`)
   if (!existsSync(path)) return []
-  const messages: { role: string; text: string; ts: string }[] = []
+  const messages: { role: string; text: string; ts: string; toolCalls?: { name: string; input: unknown }[] }[] = []
   try {
     for (const line of readFileSync(path, 'utf8').split('\n').filter(Boolean)) {
       const entry = JSON.parse(line) as Record<string, unknown>
@@ -91,6 +91,7 @@ function getSessionMessages(project: string, sessionId: string) {
       const msg = entry.message as Record<string, unknown>
       const content = msg?.content
       let text = ''
+      let toolCalls: { name: string; input: unknown }[] | undefined
       if (typeof content === 'string') {
         text = content
       } else if (Array.isArray(content)) {
@@ -98,9 +99,18 @@ function getSessionMessages(project: string, sessionId: string) {
           .filter((b: Record<string, unknown>) => b.type === 'text')
           .map((b: Record<string, unknown>) => String(b.text ?? ''))
           .join('\n')
+        if (role === 'assistant') {
+          const tools = content.filter((b: Record<string, unknown>) => b.type === 'tool_use')
+          if (tools.length) {
+            toolCalls = tools.map((b: Record<string, unknown>) => ({
+              name: String(b.name ?? ''),
+              input: b.input,
+            }))
+          }
+        }
       }
-      if (text.trim()) {
-        messages.push({ role, text, ts: String(entry.timestamp ?? '') })
+      if (text.trim() || toolCalls?.length) {
+        messages.push({ role, text: text.trim(), ts: String(entry.timestamp ?? ''), toolCalls })
       }
     }
   } catch {}
@@ -131,6 +141,12 @@ function watchSession(project: string, sessionId: string) {
         try {
           const entry = JSON.parse(line) as Record<string, unknown>
           messageBus.broadcast({ type: 'message', entry })
+          // Broadcast thinking state based on entry type
+          if (entry.type === 'user') {
+            messageBus.broadcast({ type: 'thinking', active: true })
+          } else if (entry.type === 'assistant') {
+            messageBus.broadcast({ type: 'thinking', active: false })
+          }
         } catch {}
       }
     } catch {}
@@ -148,7 +164,8 @@ function getDashboardHTML(): string {
 
 const clients = new Set<import('bun').ServerWebSocket<unknown>>()
 
-export function startDashboardServer(currentModel: string) {
+export function startDashboardServer(initialModel: string) {
+  let currentModel = initialModel
   const server = Bun.serve({
     port: PORT,
     fetch(req, server) {
@@ -160,6 +177,12 @@ export function startDashboardServer(currentModel: string) {
       // API routes
       if (url.pathname === '/api/sessions') {
         return Response.json(listSessions())
+      }
+
+      if (url.pathname === '/api/active-session') {
+        const sessions = listSessions()
+        const active = sessions[0] ?? null
+        return Response.json(active ? { project: active.project, id: active.id } : null)
       }
 
       if (url.pathname.startsWith('/api/session/')) {
@@ -197,8 +220,14 @@ export function startDashboardServer(currentModel: string) {
         try {
           const ev = JSON.parse(String(msg)) as Record<string, unknown>
           if (ev.type === 'input' && typeof ev.text === 'string' && ev.text.trim()) {
-            // Inject text into stdin so the running REPL receives it
             process.stdin.push(ev.text + '\r')
+          }
+          if (ev.type === 'set_model' && typeof ev.model === 'string') {
+            currentModel = ev.model
+            messageBus.broadcast({ type: 'model', model: currentModel })
+          }
+          if (ev.type === 'toggle_autopermissions') {
+            process.stdin.push('/autosuper\r')
           }
         } catch {}
       },

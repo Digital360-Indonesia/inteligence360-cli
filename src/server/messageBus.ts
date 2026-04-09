@@ -5,6 +5,7 @@ export type BusEvent =
   | { type: 'model';     model: string }
   | { type: 'session';   sessionId: string }
   | { type: 'input';     text: string }
+  | { type: 'thinking';  active: boolean }
 
 class MessageBus extends EventEmitter {
   broadcast(event: BusEvent) {
