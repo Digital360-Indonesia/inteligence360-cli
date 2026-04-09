@@ -2114,6 +2114,16 @@ async function run(): Promise<CommanderCommand> {
     setInitialMainLoopModel(getUserSpecifiedModelSetting() || null);
     const initialMainLoopModel = getInitialMainLoopModel();
     const resolvedInitialModel = parseUserSpecifiedModel(initialMainLoopModel ?? getDefaultMainLoopModel());
+
+    // Start Intelligence360 Command Center dashboard server if --ui flag is set
+    if ((options as { ui?: boolean }).ui) {
+      const { startDashboardServer, PORT } = await import('./server/dashboardServer.js')
+      startDashboardServer(resolvedInitialModel)
+      const url = `http://localhost:${PORT}`
+      Bun.spawn(['open', url], { stdout: 'inherit', stderr: 'inherit' })
+      // biome-ignore lint/suspicious/noConsole:: intentional console output
+      console.log(`\n◈ Intelligence360 Command Center → ${url}\n`)
+    }
     let advisorModel: string | undefined;
     if (isAdvisorEnabled()) {
       const advisorOption = canUserConfigureAdvisor() ? (options as {
@@ -3806,6 +3816,9 @@ async function run(): Promise<CommanderCommand> {
       }, renderAndRun);
     }
   }).version(`${MACRO.VERSION} (Claude Code)`, '-v, --version', 'Output the version number');
+
+  // Intelligence360 Command Center dashboard
+  program.option('--ui', 'Open Intelligence360 Command Center in browser', () => true);
 
   // Worktree flags
   program.option('-w, --worktree [name]', 'Create a new git worktree for this session (optionally specify a name)');
