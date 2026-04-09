@@ -148,6 +148,8 @@ import antTrace from './commands/ant-trace/index.js'
 import perfIssue from './commands/perf-issue/index.js'
 import sandboxToggle from './commands/sandbox-toggle/index.js'
 import autosuper from './commands/autosuper/index.js'
+import saveskill from './commands/saveskill/index.js'
+import refreshskills from './commands/saveskill/refreshskills-index.js'
 import chrome from './commands/chrome/index.js'
 import commandcenter from './commands/commandcenter/index.js'
 import stickers from './commands/stickers/index.js'
@@ -262,6 +264,8 @@ const COMMANDS = memoize((): Command[] => [
   advisor,
   agents,
   autosuper,
+  saveskill,
+  refreshskills,
   branch,
   btw,
   chrome,
