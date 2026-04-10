@@ -150,6 +150,8 @@ import sandboxToggle from './commands/sandbox-toggle/index.js'
 import autosuper from './commands/autosuper/index.js'
 import saveskill from './commands/saveskill/index.js'
 import refreshskills from './commands/saveskill/refreshskills-index.js'
+import recall from './commands/recall/index.js'
+import memsave from './commands/memsave/index.js'
 import chrome from './commands/chrome/index.js'
 import commandcenter from './commands/commandcenter/index.js'
 import stickers from './commands/stickers/index.js'
@@ -266,6 +268,8 @@ const COMMANDS = memoize((): Command[] => [
   autosuper,
   saveskill,
   refreshskills,
+  recall,
+  memsave,
   branch,
   btw,
   chrome,

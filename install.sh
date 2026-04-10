@@ -35,17 +35,52 @@ cd "$INSTALL_DIR"
 bun install --frozen-lockfile 2>/dev/null || bun install
 echo "  ✓ Dependencies installed"
 
-# ── 3b. Install bundled skills ─────────────────────────────────────────────
+# ── 3b. Install bundled skills (copy if missing or outdated) ──────────────
 SKILLS_DIR="$HOME/.intelligence360/skills"
 mkdir -p "$SKILLS_DIR"
 if [ -d "$INSTALL_DIR/skills" ]; then
   for skill_dir in "$INSTALL_DIR/skills"/*/; do
     skill_name="$(basename "$skill_dir")"
+    bundled_ver=$(grep -m1 'version:' "$skill_dir/SKILL.md" 2>/dev/null | tr -d ' "' | cut -d: -f2)
+    installed_ver=$(grep -m1 'version:' "$SKILLS_DIR/$skill_name/SKILL.md" 2>/dev/null | tr -d ' "' | cut -d: -f2)
     if [ ! -d "$SKILLS_DIR/$skill_name" ]; then
       cp -r "$skill_dir" "$SKILLS_DIR/$skill_name"
-      echo "  ✓ Skill: $skill_name"
+      echo "  ✓ Skill installed: $skill_name"
+    elif [ -n "$bundled_ver" ] && [ "$bundled_ver" != "$installed_ver" ]; then
+      cp -r "$skill_dir" "$SKILLS_DIR/$skill_name"
+      echo "  ↑ Skill updated: $skill_name ($installed_ver → $bundled_ver)"
     fi
   done
+fi
+
+# ── 3c. Wire up memory hooks in ~/.claude/settings.json ───────────────────
+CLAUDE_SETTINGS="$HOME/.claude/settings.json"
+mkdir -p "$HOME/.claude"
+HOOK_CMD="bun run $INSTALL_DIR/src/intelligence360/memoryHook.ts"
+
+if [ ! -f "$CLAUDE_SETTINGS" ]; then
+  echo '{}' > "$CLAUDE_SETTINGS"
+fi
+
+# Only add hooks if not already present
+if ! grep -q "memoryHook" "$CLAUDE_SETTINGS" 2>/dev/null; then
+  # Use node/bun to merge JSON safely
+  if command -v bun &>/dev/null; then
+    bun -e "
+      const fs = require('fs');
+      const path = '$CLAUDE_SETTINGS';
+      let cfg = {};
+      try { cfg = JSON.parse(fs.readFileSync(path, 'utf8')); } catch {}
+      cfg.hooks = cfg.hooks || {};
+      cfg.hooks.PreToolUse = cfg.hooks.PreToolUse || [];
+      // Session start hook via UserPromptSubmit
+      cfg.hooks.UserPromptSubmit = cfg.hooks.UserPromptSubmit || [];
+      const hookEntry = { matcher: '', hooks: [{ type: 'command', command: '$HOOK_CMD session-start' }] };
+      const alreadyAdded = (cfg.hooks.UserPromptSubmit || []).some(h => JSON.stringify(h).includes('memoryHook'));
+      if (!alreadyAdded) cfg.hooks.UserPromptSubmit.push(hookEntry);
+      fs.writeFileSync(path, JSON.stringify(cfg, null, 2));
+    " 2>/dev/null && echo "  ✓ Memory hooks configured" || true
+  fi
 fi
 
 # ── 4. Create bin dir + launcher with dynamic bun detection ───────────────
