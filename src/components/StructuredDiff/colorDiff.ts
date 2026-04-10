@@ -32,6 +32,13 @@ export function expectColorFile(): typeof ColorFile | null {
   if (getColorModuleUnavailableReason() !== null) return null
   // Guard against stub builds where color-diff-napi exports {}
   if (typeof ColorFile !== 'function') return null
+  // Guard against partial stubs where the class exists but render() is missing
+  // (can happen on Linux if the native .node binary isn't available)
+  try {
+    if (typeof (ColorFile.prototype as { render?: unknown })?.render !== 'function') return null
+  } catch {
+    return null
+  }
   return ColorFile
 }
 
