@@ -59,4 +59,8 @@ Type `/model`, select a provider, paste your API key — it will test the connec
 
 ---
 
+→ **[Full Capabilities Guide](CAPABILITIES.md)** — Skills, Memory, Dashboard, Commands
+
+---
+
 Built by [Digital360 Indonesia](https://github.com/Digital360-Indonesia)
