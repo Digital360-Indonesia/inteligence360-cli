@@ -1837,7 +1837,7 @@ function runHeadlessStreaming(
           setTimeout(() => {
             if (
               !proactiveModule?.isProactiveActive() ||
-              proactiveModule.isProactivePaused() ||
+              proactiveModule?.isProactivePaused() ||
               inputClosed
             ) {
               return
@@ -2476,7 +2476,7 @@ function runHeadlessStreaming(
     if (
       (feature('PROACTIVE') || feature('KAIROS')) &&
       proactiveModule?.isProactiveActive() &&
-      !proactiveModule.isProactivePaused()
+      !proactiveModule?.isProactivePaused()
     ) {
       if (peek(isMainThread) === undefined && !inputClosed) {
         scheduleProactiveTick!()

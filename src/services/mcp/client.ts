@@ -1982,8 +1982,9 @@ export const fetchToolsForClient = memoizeWithLRU(
               : {}),
             ...(feature('CHICAGO_MCP') &&
             (client.config.type === 'stdio' || !client.config.type) &&
-            isComputerUseMCPServer!(client.name)
-              ? computerUseWrapper!().getComputerUseMCPToolOverrides(tool.name)
+            isComputerUseMCPServer?.(client.name) &&
+            computerUseWrapper
+              ? computerUseWrapper().getComputerUseMCPToolOverrides(tool.name)
               : {}),
           }
         })
