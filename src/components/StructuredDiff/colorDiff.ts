@@ -25,6 +25,11 @@ export function getColorModuleUnavailableReason(): ColorModuleUnavailableReason 
 export function expectColorDiff(): typeof ColorDiff | null {
   if (getColorModuleUnavailableReason() !== null) return null
   if (typeof ColorDiff !== 'function') return null
+  try {
+    if (typeof (ColorDiff.prototype as { render?: unknown })?.render !== 'function') return null
+  } catch {
+    return null
+  }
   return ColorDiff
 }
 
