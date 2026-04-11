@@ -49,7 +49,12 @@ export const HighlightedCode = memo(function HighlightedCode(t0) {
     }
     let t4;
     if ($[1] !== code || $[2] !== filePath) {
-      t4 = new ColorFile(code, filePath);
+      try {
+        const inst = new ColorFile(code, filePath);
+        t4 = typeof (inst as { render?: unknown }).render === 'function' ? inst : null;
+      } catch {
+        t4 = null;
+      }
       $[1] = code;
       $[2] = filePath;
       $[3] = t4;
@@ -89,7 +94,11 @@ export const HighlightedCode = memo(function HighlightedCode(t0) {
     }
     let t6;
     if ($[7] !== colorFile || $[8] !== dim || $[9] !== measuredWidth || $[10] !== theme) {
-      t6 = colorFile.render(theme, measuredWidth, dim);
+      try {
+        t6 = (colorFile as { render: (t: string, w: number, d: boolean) => unknown }).render(theme, measuredWidth, dim);
+      } catch {
+        t6 = null;
+      }
       $[7] = colorFile;
       $[8] = dim;
       $[9] = measuredWidth;

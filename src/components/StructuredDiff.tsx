@@ -62,7 +62,14 @@ function renderColorDiff(patch: StructuredPatchHunk, firstLine: string | null, f
   let perHunk = RENDER_CACHE.get(patch);
   const hit = perHunk?.get(key);
   if (hit) return hit;
-  const lines = new ColorDiff(patch, firstLine, filePath, fileContent).render(theme, width, dim);
+  let lines: string[] | null;
+  try {
+    const instance = new ColorDiff(patch, firstLine, filePath, fileContent);
+    if (typeof (instance as { render?: unknown }).render !== 'function') return null;
+    lines = (instance as { render: (theme: string, width: number, dim: boolean) => string[] | null }).render(theme, width, dim);
+  } catch {
+    return null;
+  }
   if (lines === null) return null;
 
   // Pre-split the gutter column once (cold-cache). sliceAnsi preserves
