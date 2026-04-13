@@ -55,15 +55,22 @@ fi
 
 # ── 3c. Create memory hook wrapper + wire it up ────────────────────────────
 HOOK_WRAPPER="$BIN_DIR/i360-memory-hook"
-cat > "$HOOK_WRAPPER" << 'HOOKSCRIPT'
+cat > "$HOOK_WRAPPER" << HOOKSCRIPT
 #!/bin/bash
-# Intelligence360 memory hook wrapper — only runs when INTELLIGENCE360_SESSION is set
-[ -z "$INTELLIGENCE360_SESSION" ] && exit 0
-if command -v bun &>/dev/null; then BUN="$(command -v bun)"
-elif [ -f "$HOME/.bun/bin/bun" ]; then BUN="$HOME/.bun/bin/bun"
+[ -z "\$INTELLIGENCE360_SESSION" ] && exit 0
+if command -v bun &>/dev/null; then BUN="\$(command -v bun)"
+elif [ -f "\$HOME/.bun/bin/bun" ]; then BUN="\$HOME/.bun/bin/bun"
 else exit 0; fi
-INSTALL_DIR="$HOME/.local/share/intelligence360"
-exec "$BUN" run "$INSTALL_DIR/src/intelligence360/memoryHook.ts" "$1"
+I360_BIN="\$(which intelligence360 2>/dev/null || echo "$BIN_DIR/intelligence360")"
+if [ -L "\$I360_BIN" ]; then
+  REAL_PATH="\$(readlink -f "\$I360_BIN" 2>/dev/null)"
+  INSTALL_DIR="\$(cd "\$(dirname "\$REAL_PATH")" && pwd)"
+else
+  INSTALL_DIR="$INSTALL_DIR"
+fi
+HOOK_SCRIPT="\$INSTALL_DIR/src/intelligence360/memoryHook.ts"
+[ ! -f "\$HOOK_SCRIPT" ] && exit 0
+exec "\$BUN" run "\$HOOK_SCRIPT" "\$1"
 HOOKSCRIPT
 chmod +x "$HOOK_WRAPPER"
 
