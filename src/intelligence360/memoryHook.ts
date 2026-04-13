@@ -8,7 +8,15 @@
  *   session-start  — inject recent memories into CLAUDE.md
  *   session-end    — save session summary
  *   prompt-submit  — save user prompt as memory (optional, noisy)
+ *
+ * Safety: only runs when INTELLIGENCE360_SESSION is set, so it won't
+ * interfere with vanilla Claude Code sessions.
  */
+// Guard: skip entirely if not an Intelligence360 session
+if (!process.env.INTELLIGENCE360_SESSION && !process.env.INTELLIGENCE360_AUTO_PERMISSIONS) {
+  process.exit(0)
+}
+
 import { saveMemory, getRecentMemories, injectMemoriesIntoCLAUDEMd } from './memoryDB.js'
 
 const event = process.argv[2] ?? ''

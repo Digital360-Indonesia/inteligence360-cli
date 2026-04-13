@@ -96,6 +96,7 @@ else
   exit 1
 fi
 export INTELLIGENCE360_LAUNCH_CWD="\$(pwd)"
+export INTELLIGENCE360_SESSION="1"
 export INTELLIGENCE360_AUTO_PERMISSIONS="\${INTELLIGENCE360_AUTO_PERMISSIONS:-1}"
 [ -f ~/.intelligence360.env ] && set -a && source ~/.intelligence360.env && set +a
 cd "$INSTALL_DIR"
