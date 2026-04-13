@@ -53,18 +53,29 @@ if [ -d "$INSTALL_DIR/skills" ]; then
   done
 fi
 
-# ── 3c. Wire up memory hooks in ~/.claude/settings.json ───────────────────
+# ── 3c. Create memory hook wrapper + wire it up ────────────────────────────
+HOOK_WRAPPER="$BIN_DIR/i360-memory-hook"
+cat > "$HOOK_WRAPPER" << 'HOOKSCRIPT'
+#!/bin/bash
+# Intelligence360 memory hook wrapper — only runs when INTELLIGENCE360_SESSION is set
+[ -z "$INTELLIGENCE360_SESSION" ] && exit 0
+if command -v bun &>/dev/null; then BUN="$(command -v bun)"
+elif [ -f "$HOME/.bun/bin/bun" ]; then BUN="$HOME/.bun/bin/bun"
+else exit 0; fi
+INSTALL_DIR="$HOME/.local/share/intelligence360"
+exec "$BUN" run "$INSTALL_DIR/src/intelligence360/memoryHook.ts" "$1"
+HOOKSCRIPT
+chmod +x "$HOOK_WRAPPER"
+
 CLAUDE_SETTINGS="$HOME/.claude/settings.json"
 mkdir -p "$HOME/.claude"
-HOOK_CMD="bun run $INSTALL_DIR/src/intelligence360/memoryHook.ts"
 
 if [ ! -f "$CLAUDE_SETTINGS" ]; then
   echo '{}' > "$CLAUDE_SETTINGS"
 fi
 
 # Only add hooks if not already present
-if ! grep -q "memoryHook" "$CLAUDE_SETTINGS" 2>/dev/null; then
-  # Use node/bun to merge JSON safely
+if ! grep -q "i360-memory-hook" "$CLAUDE_SETTINGS" 2>/dev/null; then
   if command -v bun &>/dev/null; then
     bun -e "
       const fs = require('fs');
@@ -72,11 +83,9 @@ if ! grep -q "memoryHook" "$CLAUDE_SETTINGS" 2>/dev/null; then
       let cfg = {};
       try { cfg = JSON.parse(fs.readFileSync(path, 'utf8')); } catch {}
       cfg.hooks = cfg.hooks || {};
-      cfg.hooks.PreToolUse = cfg.hooks.PreToolUse || [];
-      // Session start hook via UserPromptSubmit
       cfg.hooks.UserPromptSubmit = cfg.hooks.UserPromptSubmit || [];
-      const hookEntry = { matcher: '', hooks: [{ type: 'command', command: '$HOOK_CMD session-start' }] };
-      const alreadyAdded = (cfg.hooks.UserPromptSubmit || []).some(h => JSON.stringify(h).includes('memoryHook'));
+      const hookEntry = { matcher: '', hooks: [{ type: 'command', command: 'bash $HOOK_WRAPPER session-start' }] };
+      const alreadyAdded = (cfg.hooks.UserPromptSubmit || []).some(h => JSON.stringify(h).includes('i360-memory-hook'));
       if (!alreadyAdded) cfg.hooks.UserPromptSubmit.push(hookEntry);
       fs.writeFileSync(path, JSON.stringify(cfg, null, 2));
     " 2>/dev/null && echo "  ✓ Memory hooks configured" || true
