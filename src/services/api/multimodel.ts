@@ -8,12 +8,14 @@
  *   grok:grok-3
  *   glm:glm-4-plus
  *   qwen:qwen-max
+ *   minimax:MiniMax-M2.7  (Anthropic-compatible endpoint)
  */
 
 import Anthropic, { APIError } from '@anthropic-ai/sdk'
 import type { BetaRawMessageStreamEvent } from '@anthropic-ai/sdk/resources/beta/messages/messages'
 import type { Stream } from '@anthropic-ai/sdk/streaming'
 import OpenAI from 'openai'
+import { logForDebugging } from '../../utils/debug.js'
 
 // ---------------------------------------------------------------------------
 // Provider registry
@@ -56,6 +58,29 @@ const PROVIDERS: Record<string, ProviderConfig> = {
   },
 }
 
+// Map UI model IDs to actual provider API model IDs
+function mapModelIdForProvider(provider: string, modelId: string): string {
+  // Gemini's OpenAI-compatible endpoint expects plain model IDs, not `models/...`.
+  if (provider === 'gemini') {
+    const geminiMapping: Record<string, string> = {
+      'gemini-3.1-pro-preview': 'gemini-3.1-pro-preview',
+      'gemini-3.1-flash-live-preview': 'gemini-3.1-flash-live-preview',
+      'gemini-3-flash-preview': 'gemini-3-flash-preview',
+      'gemini-2.5-pro': 'gemini-2.5-pro',
+      'gemini-2.5-flash': 'gemini-2.5-flash',
+    }
+    return geminiMapping[modelId] || modelId
+  }
+
+  // OpenAI GPT-5 uses different model IDs for API
+  if (provider === 'openai' && modelId.includes('gpt-5')) {
+    return modelId
+  }
+
+  // Default: use as-is
+  return modelId
+}
+
 // ---------------------------------------------------------------------------
 // Provider detection
 // ---------------------------------------------------------------------------
@@ -71,6 +96,7 @@ export function parseModelPrefix(model: string): { provider: string; modelId: st
 
 export function isThirdPartyModel(model: string | undefined): boolean {
   if (!model) return false
+  if (model.startsWith('minimax:')) return true
   return parseModelPrefix(model) !== null
 }
 
@@ -82,8 +108,23 @@ type AnthropicParams = Parameters<Anthropic['beta']['messages']['create']>[0]
 
 function convertMessages(
   messages: AnthropicParams['messages'],
+  isGemini: boolean = false,
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
   const result: OpenAI.Chat.ChatCompletionMessageParam[] = []
+
+  // Pre-scan: collect every tool_use_id that has a matching tool_result anywhere
+  // in the message list. Used below to avoid injecting stub responses for tool
+  // calls that DO have a real response later in the conversation.
+  const toolResultIds = new Set<string>()
+  for (const msg of messages) {
+    if (Array.isArray(msg.content)) {
+      for (const block of msg.content) {
+        if (block.type === 'tool_result' && block.tool_use_id) {
+          toolResultIds.add(String(block.tool_use_id))
+        }
+      }
+    }
+  }
 
   for (const msg of messages) {
     if (typeof msg.content === 'string') {
@@ -93,21 +134,32 @@ function convertMessages(
 
     // Array content blocks
     const textParts: string[] = []
+    // Collect tool_result messages in a buffer so they are flushed AFTER the
+    // user's text message (if any), preserving the correct ordering:
+    //   user-text → tool(result1) → tool(result2)
+    const toolResultBuffer: OpenAI.Chat.ChatCompletionMessageParam[] = []
+
     for (const block of msg.content) {
       if (block.type === 'text') {
         textParts.push(block.text)
       } else if (block.type === 'tool_result') {
-        // Tool result from user — map as tool message
         const toolContent = Array.isArray(block.content)
           ? block.content.filter((b: { type: string }) => b.type === 'text').map((b: { type: string; text?: string }) => b.type === 'text' ? (b.text ?? '') : '').join('\n')
           : typeof block.content === 'string'
             ? block.content
             : ''
-        result.push({
-          role: 'tool',
-          tool_call_id: String(block.tool_use_id),
-          content: toolContent,
-        })
+
+        if (isGemini) {
+          // Gemini's OpenAI-compatible endpoint does not accept standalone `tool`
+          // role messages — fold tool results back into the user turn as text.
+          textParts.push(toolContent)
+        } else {
+          toolResultBuffer.push({
+            role: 'tool',
+            tool_call_id: String(block.tool_use_id),
+            content: toolContent,
+          })
+        }
         continue
       } else if (block.type === 'tool_use') {
         // Tool call from assistant — handled below
@@ -120,23 +172,62 @@ function convertMessages(
       : []
 
     if (toolUseCalls.length > 0) {
-      result.push({
-        role: 'assistant',
-        content: textParts.join('\n') || null,
-        tool_calls: toolUseCalls.map((b: { type: string; id?: string; name?: string; input?: unknown }) => ({
+      if (isGemini) {
+        // Gemini: emit tool_calls normally — Gemini supports function calling
+        // but tool responses must come back as user text, not `tool` role.
+        result.push({
+          role: 'assistant',
+          content: textParts.join('\n') || null,
+          tool_calls: toolUseCalls.map((b: { type: string; id?: string; name?: string; input?: unknown }) => ({
+            id: b.id ?? '',
+            type: 'function' as const,
+            function: {
+              name: b.name ?? '',
+              arguments: JSON.stringify(b.input ?? {}),
+            },
+          })),
+        } as OpenAI.Chat.ChatCompletionMessageParam)
+      } else {
+        const toolCallParams = toolUseCalls.map((b: { type: string; id?: string; name?: string; input?: unknown }) => ({
           id: b.id ?? '',
           type: 'function' as const,
           function: {
             name: b.name ?? '',
             arguments: JSON.stringify(b.input ?? {}),
           },
-        })),
-      } as OpenAI.Chat.ChatCompletionMessageParam)
-    } else if (textParts.length > 0) {
-      result.push({
-        role: msg.role as 'user' | 'assistant',
-        content: textParts.join('\n'),
-      })
+        }))
+        result.push({
+          role: 'assistant',
+          content: textParts.join('\n') || null,
+          tool_calls: toolCallParams,
+        } as OpenAI.Chat.ChatCompletionMessageParam)
+
+        // Inject stub responses immediately after this assistant message for
+        // any tool_call that has NO matching tool_result anywhere in the
+        // conversation (orphaned calls at the end of a cut-off session).
+        // We use the pre-scanned toolResultIds set so we never inject a stub
+        // for a call that has a real response coming later in the loop —
+        // that would create duplicate tool responses and cause a 400.
+        for (const tc of toolCallParams) {
+          if (!toolResultIds.has(tc.id)) {
+            result.push({
+              role: 'tool',
+              tool_call_id: tc.id,
+              content: '',
+            })
+          }
+        }
+      }
+    } else if (textParts.length > 0 || toolResultBuffer.length > 0) {
+      // Emit user text first (if any), then tool result messages after.
+      if (textParts.length > 0) {
+        result.push({
+          role: msg.role as 'user' | 'assistant',
+          content: textParts.join('\n'),
+        })
+      }
+      // Flush buffered tool_result messages (non-Gemini path)
+      result.push(...toolResultBuffer)
     }
   }
 
@@ -336,31 +427,102 @@ export function createOpenAICompatibleClient(
     _options?: { signal?: AbortSignal; headers?: Record<string, string> },
   ) => {
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = []
+    const isGemini = provider === 'gemini'
 
-    // system prompt
+    // system prompt — prepend a conciseness directive so third-party models
+    // behave like Claude: direct, terse, no preamble, no trailing summaries.
+    const THIRD_PARTY_PREFIX =
+      'You are a senior software engineer assistant. ' +
+      'Be extremely concise and direct. ' +
+      'Skip all preamble, affirmations ("Sure!", "Great question!"), and trailing summaries. ' +
+      'Give the solution or answer immediately. ' +
+      'When writing code, output only the code and the minimum explanation needed. ' +
+      'Match the response length to the complexity of the request — simple questions get one-line answers.\n\n'
+
     if (params.system) {
       const systemText = typeof params.system === 'string'
         ? params.system
         : params.system.map((b: { type: string; text?: string }) => b.type === 'text' ? (b.text ?? '') : '').join('\n')
-      if (systemText) messages.push({ role: 'system', content: systemText })
+      if (systemText) messages.push({ role: 'system', content: THIRD_PARTY_PREFIX + systemText })
+    } else {
+      messages.push({ role: 'system', content: THIRD_PARTY_PREFIX })
     }
 
-    messages.push(...convertMessages(params.messages))
+    messages.push(...convertMessages(params.messages, isGemini))
 
-    const openAIParams: OpenAI.Chat.ChatCompletionCreateParamsStreaming = {
-      model: modelId,
+    // Provider-specific parameter mapping
+    let maxTokensField = 'max_tokens'
+    let maxTokensValue = params.max_tokens
+
+    // OpenAI GPT-5 models use max_completion_tokens instead of max_tokens.
+    // Also cap at 8192 to avoid inflating TPM usage and triggering 429s.
+    if (provider === 'openai' && modelId.includes('gpt-5')) {
+      maxTokensField = 'max_completion_tokens'
+      if (!maxTokensValue || maxTokensValue > 8192) maxTokensValue = 8192
+    }
+
+    // Gemini's OpenAI-compatible endpoint is stricter about unsupported fields.
+    // Keep the payload minimal and avoid large output limits that can trigger 400s.
+    if (isGemini && maxTokensValue && maxTokensValue > 4096) {
+      maxTokensValue = 4096
+    }
+
+    // deepseek-reasoner (R1) does not support tools or temperature.
+    const isDeepSeekReasoner = provider === 'deepseek' && modelId === 'deepseek-reasoner'
+
+    const openAIParams: any = {
+      model: mapModelIdForProvider(provider, modelId),
       messages,
       stream: true,
-      max_tokens: params.max_tokens,
-      ...(params.temperature !== undefined && { temperature: params.temperature }),
+      [maxTokensField]: maxTokensValue,
+      // Use upstream temperature if provided, otherwise default to 0.2 for focused
+      // responses. Skip for Gemini (rejects unknown params) and DeepSeek reasoner.
+      ...(!isGemini && !isDeepSeekReasoner && { temperature: params.temperature ?? 0.2 }),
       ...(params.top_p !== undefined && { top_p: params.top_p }),
       ...(params.stop_sequences?.length && { stop: params.stop_sequences }),
     }
 
     const tools = convertTools(params.tools)
-    if (tools?.length) {
+    if (tools?.length && !isDeepSeekReasoner) {
       openAIParams.tools = tools
       openAIParams.tool_choice = 'auto'
+    }
+
+    if (isGemini) {
+      const debugPayload = {
+        model: openAIParams.model,
+        stream: openAIParams.stream,
+        messageCount: Array.isArray(messages) ? messages.length : 0,
+        roles: Array.isArray(messages) ? messages.map(message => message.role) : [],
+        openAIRoles: Array.isArray(openAIParams.messages)
+          ? openAIParams.messages.map((message: { role?: string }) => message.role ?? 'unknown')
+          : [],
+        hasSystemPrompt: Boolean(params.system),
+        systemLength:
+          typeof params.system === 'string'
+            ? params.system.length
+            : Array.isArray(params.system)
+              ? params.system
+                  .filter((block: { type: string; text?: string }) => block.type === 'text')
+                  .reduce((total: number, block: { type: string; text?: string }) => total + (block.text?.length ?? 0), 0)
+              : 0,
+        maxTokensField,
+        maxTokensValue,
+        temperature: openAIParams.temperature ?? null,
+        topP: openAIParams.top_p ?? null,
+        stopCount: Array.isArray(openAIParams.stop) ? openAIParams.stop.length : 0,
+        toolCount: Array.isArray(openAIParams.tools) ? openAIParams.tools.length : 0,
+        approxMessageChars: Array.isArray(messages)
+          ? messages.reduce((total: number, message: { content?: unknown }) => {
+              if (typeof message.content === 'string') return total + message.content.length
+              if (Array.isArray(message.content)) {
+                return total + message.content.reduce((inner: number, block: { text?: string }) => inner + (block.text?.length ?? 0), 0)
+              }
+              return total
+            }, 0)
+          : 0,
+      }
+      logForDebugging(`[multimodel][gemini] request ${JSON.stringify(debugPayload)}`)
     }
 
     // The Anthropic SDK's .withResponse() returns { data: Stream, request_id, response }
@@ -402,26 +564,101 @@ export function createOpenAICompatibleClient(
           response: new Response(null, { status: 200 }),
         }
       } catch (err: unknown) {
+        if (isGemini) {
+          const debugError =
+            err instanceof Error
+              ? { name: err.name, message: err.message, stack: err.stack }
+              : err
+          logForDebugging(`[multimodel][gemini] error ${JSON.stringify(debugError)}`, {
+            level: 'error',
+          })
+        }
         if (err && typeof err === 'object' && 'status' in err) {
           const e = err as { status: number; message: string; headers?: Headers }
-          // Mark as non-retriable so withRetry gives up immediately instead of
-          // retrying 10 times (bad API keys won't fix themselves on retry).
           const headers = new Headers(e.headers)
-          headers.set('x-should-retry', 'false')
+          // 429 (rate limit) and 529 (overloaded) are transient — let withRetry
+          // back off and retry normally. For everything else (401 bad key, 403,
+          // 400 bad request, etc.) mark as non-retriable so we don't loop 10x.
+          const isTransient = e.status === 429 || e.status === 529
+          if (!isTransient) {
+            headers.set('x-should-retry', 'false')
+          }
           throw new APIError(e.status, { error: { message: e.message } }, e.message, headers)
         }
         throw err
       }
     }
 
-    const result = Object.assign(
-      Promise.resolve({
-        [Symbol.asyncIterator]: async function* () {
-          const inner = await withResponse()
-          yield* inner.data as AsyncIterable<unknown>
+    // When awaited directly (non-streaming path, e.g. sideQuery / yoloClassifier),
+    // collect the stream into a proper BetaMessage-shaped object so callers can
+    // access response.usage, response.content, etc. without crashing.
+    const nonStreamingPromise = withResponse().then(async ({ data }) => {
+      const content: Array<{ type: string; text?: string; id?: string; name?: string; input?: unknown }> = []
+      let inputTokens = 0
+      let outputTokens = 0
+      let stopReason: string | null = null
+      let messageId = `msg_${Math.random().toString(36).slice(2)}`
+      let currentText = ''
+      let currentToolId = ''
+      let currentToolName = ''
+      let currentToolInput = ''
+
+      for await (const event of data as AsyncIterable<BetaRawMessageStreamEvent>) {
+        if (event.type === 'message_start') {
+          messageId = event.message?.id ?? messageId
+          inputTokens = event.message?.usage?.input_tokens ?? 0
+          outputTokens = event.message?.usage?.output_tokens ?? 0
+        } else if (event.type === 'content_block_start') {
+          const block = (event as { type: string; content_block?: { type: string; text?: string; id?: string; name?: string } }).content_block
+          if (block?.type === 'tool_use') {
+            currentToolId = block.id ?? ''
+            currentToolName = block.name ?? ''
+            currentToolInput = ''
+          } else {
+            currentText = ''
+          }
+        } else if (event.type === 'content_block_delta') {
+          const delta = (event as { type: string; delta?: { type: string; text?: string; partial_json?: string } }).delta
+          if (delta?.type === 'text_delta') currentText += delta.text ?? ''
+          else if (delta?.type === 'input_json_delta') currentToolInput += delta.partial_json ?? ''
+        } else if (event.type === 'content_block_stop') {
+          if (currentToolId) {
+            let parsedInput: unknown = {}
+            try { parsedInput = JSON.parse(currentToolInput) } catch {}
+            content.push({ type: 'tool_use', id: currentToolId, name: currentToolName, input: parsedInput })
+            currentToolId = ''
+            currentToolName = ''
+            currentToolInput = ''
+          } else if (currentText) {
+            content.push({ type: 'text', text: currentText })
+            currentText = ''
+          }
+        } else if (event.type === 'message_delta') {
+          const ev = event as { type: string; delta?: { stop_reason?: string | null }; usage?: { output_tokens?: number } }
+          stopReason = ev.delta?.stop_reason ?? stopReason
+          if (ev.usage?.output_tokens) outputTokens = ev.usage.output_tokens
+        }
+      }
+
+      return {
+        id: messageId,
+        type: 'message' as const,
+        role: 'assistant' as const,
+        content,
+        model: modelId,
+        stop_reason: stopReason,
+        stop_sequence: null,
+        usage: {
+          input_tokens: inputTokens,
+          output_tokens: outputTokens,
+          cache_creation_input_tokens: 0,
+          cache_read_input_tokens: 0,
         },
-        controller: {},
-      }),
+      }
+    })
+
+    const result = Object.assign(
+      nonStreamingPromise,
       { withResponse },
     )
 
@@ -433,6 +670,49 @@ export function createOpenAICompatibleClient(
     beta: {
       messages: {
         create: createStream,
+      },
+    },
+  }
+
+  return duck as unknown as Anthropic
+}
+
+// ---------------------------------------------------------------------------
+// MiniMax — Anthropic-compatible endpoint
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a duck-typed Anthropic client for MiniMax's Anthropic-compatible
+ * endpoint. Unlike OpenAI-compatible providers, MiniMax speaks the native
+ * Anthropic API format, so we use the real Anthropic SDK and only need to
+ * strip the `minimax:` prefix from the model string before sending.
+ */
+export function createMinimaxClient(modelId: string): Anthropic {
+  const apiKey = process.env.MINIMAX_API_KEY
+  if (!apiKey) {
+    throw new Error('Missing API key for MiniMax. Set the MINIMAX_API_KEY environment variable.')
+  }
+
+  const client = new Anthropic({
+    apiKey,
+    baseURL: 'https://api.minimax.io/anthropic',
+    defaultHeaders: { 'anthropic-version': '2023-06-01' },
+  })
+
+  // Intercept beta.messages.create to strip the `minimax:` prefix from model
+  const originalCreate = client.beta.messages.create.bind(client.beta.messages)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const patchedCreate = (params: any, options?: any) => {
+    const patchedParams = Object.assign({}, params, {
+      model: typeof params.model === 'string' ? params.model.replace(/^minimax:/, '') : params.model,
+    })
+    return originalCreate(patchedParams, options)
+  }
+
+  const duck = {
+    beta: {
+      messages: {
+        create: patchedCreate,
       },
     },
   }

@@ -57,7 +57,7 @@ export function createIntelligenceFeed(): FeedConfig {
           <Box flexDirection="column" marginY={1} gap={1}>
             <Text color="#f5c842" bold>{'◈  ◈  ◈  ◈  ◈  ◈  ◈'}</Text>
             <Box flexDirection="column" paddingX={1}>
-              <Text color="#1e3a8a" bold>MULTI-MODEL CENTER</Text>
+              <Text color="#4dabf7" bold>MULTI-MODEL CENTER</Text>
               <Text dimColor>Claude · GPT · Gemini · Grok</Text>
               <Text dimColor>GLM · DeepSeek · Qwen · Llama</Text>
             </Box>

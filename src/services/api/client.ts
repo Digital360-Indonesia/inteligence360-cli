@@ -1,6 +1,6 @@
 import Anthropic, { type ClientOptions } from '@anthropic-ai/sdk'
 import { randomUUID } from 'crypto'
-import { createOpenAICompatibleClient, parseModelPrefix } from './multimodel.js'
+import { createMinimaxClient, createOpenAICompatibleClient, parseModelPrefix } from './multimodel.js'
 import type { GoogleAuth } from 'google-auth-library'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
@@ -311,6 +311,11 @@ export async function getAnthropicClient({
       : {}),
     ...ARGS,
     ...(isDebugToStdErr() && { logger: createStderrLogger() }),
+  }
+
+  // MiniMax — native Anthropic-compatible endpoint
+  if (model?.startsWith('minimax:')) {
+    return createMinimaxClient(model.slice('minimax:'.length))
   }
 
   // Third-party provider via OpenAI-compatible API

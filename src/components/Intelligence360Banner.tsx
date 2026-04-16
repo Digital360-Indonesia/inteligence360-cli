@@ -2,8 +2,8 @@ import chalk from 'chalk'
 import React, { useEffect, useState } from 'react'
 import { Box, Text } from '../ink.js'
 
-const NAVY = '#0a1f6e'
-const NAVY_LIGHT = '#1e3a8a'
+const ELECTRIC = '#4dabf7'
+const ELECTRIC_DIM = '#2563eb'
 const DIM_TEXT = '#4a6fa5'
 
 // "360" in big block ASCII art
@@ -52,20 +52,20 @@ export function Intelligence360Banner(): React.ReactNode {
   return (
     <Box flexDirection="column" marginBottom={1} marginTop={1}>
       {/* Top border */}
-      <Text>{chalk.hex(NAVY_LIGHT)('▄'.repeat(borderLen))}</Text>
+      <Text>{chalk.hex(ELECTRIC)('▄'.repeat(borderLen))}</Text>
 
       {/* 360 block art + brand label side by side */}
       <Box flexDirection="row" paddingLeft={2} gap={4} alignItems="center">
         {/* Big "360" */}
         <Box flexDirection="column">
           {LOGO_360.map((line, i) => (
-            <Text key={i}>{chalk.hex(NAVY).bold(line)}</Text>
+            <Text key={i}>{chalk.hex(ELECTRIC).bold(line)}</Text>
           ))}
         </Box>
 
         {/* Brand label */}
         <Box flexDirection="column">
-          <Text>{chalk.hex(NAVY_LIGHT).bold('Intelligence')}</Text>
+          <Text>{chalk.hex(ELECTRIC).bold('Intelligence')}</Text>
           <Text>{chalk.hex(flickerColor).bold('360')}</Text>
           <Text> </Text>
           <Text>{chalk.hex(DIM_TEXT)('Multi-model AI assistant')}</Text>
@@ -75,7 +75,7 @@ export function Intelligence360Banner(): React.ReactNode {
 
       {/* Divider */}
       <Box paddingLeft={2} marginTop={1}>
-        <Text>{chalk.hex(NAVY_LIGHT)('─'.repeat(Math.min(cols - 6, 60)))}</Text>
+        <Text>{chalk.hex(ELECTRIC)('─'.repeat(Math.min(cols - 6, 60)))}</Text>
       </Box>
 
       {/* Hints */}
@@ -87,7 +87,7 @@ export function Intelligence360Banner(): React.ReactNode {
 
       {/* Bottom border */}
       <Box marginTop={1}>
-        <Text>{chalk.hex(NAVY_LIGHT)('▀'.repeat(borderLen))}</Text>
+        <Text>{chalk.hex(ELECTRIC)('▀'.repeat(borderLen))}</Text>
       </Box>
     </Box>
   )

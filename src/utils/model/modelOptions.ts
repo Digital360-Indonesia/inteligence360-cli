@@ -324,6 +324,12 @@ function getQwenOptions(): ModelOption[] {
   ]
 }
 
+function getMiniMaxOptions(): ModelOption[] {
+  return [
+    { value: 'minimax:MiniMax-M2.7', label: 'MiniMax M2.7', description: 'MiniMax M2.7 · Latest flagship', descriptionForModel: 'MiniMax M2.7', apiKeyEnv: 'MINIMAX_API_KEY' },
+  ]
+}
+
 // @[MODEL LAUNCH]: Update the model picker lists below to include/reorder options for the new model.
 // Each user tier (ant, Max/Team Premium, Pro/Team Standard/Enterprise, PAYG 1P, PAYG 3P) has its own list.
 function getModelOptionsBase(fastMode = false): ModelOption[] {
@@ -525,6 +531,7 @@ export function getModelOptions(fastMode = false): ModelOption[] {
     ...getLlamaOptions(),
     ...getDeepSeekOptions(),
     ...getQwenOptions(),
+    ...getMiniMaxOptions(),
   ].map(opt => ({
     ...opt,
     // Prepend status emoji: 👍 configured, 🔒 not yet set up

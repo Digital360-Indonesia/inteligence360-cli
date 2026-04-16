@@ -6,6 +6,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
+import Anthropic from '@anthropic-ai/sdk'
 import OpenAI from 'openai'
 
 const ENV_FILE = join(homedir(), '.intelligence360.env')
@@ -22,7 +23,7 @@ export function saveApiKey(envVar: string, value: string): void {
   process.env[envVar] = value
 }
 
-// Provider configs for connection testing
+// Provider configs for connection testing (OpenAI-compatible providers)
 const TEST_CONFIGS: Record<string, { baseURL: string; model: string }> = {
   OPENAI_API_KEY:   { baseURL: 'https://api.openai.com/v1',                              model: 'gpt-4o-mini' },
   GROK_API_KEY:     { baseURL: 'https://api.x.ai/v1',                                    model: 'grok-3-mini' },
@@ -33,8 +34,41 @@ const TEST_CONFIGS: Record<string, { baseURL: string; model: string }> = {
   QWEN_API_KEY:     { baseURL: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', model: 'qwen3.5-flash' },
 }
 
+// Anthropic-compatible providers (use Anthropic SDK for testing)
+const ANTHROPIC_COMPAT_CONFIGS: Record<string, { baseURL: string; model: string }> = {
+  MINIMAX_API_KEY: { baseURL: 'https://api.minimax.io/anthropic', model: 'MiniMax-M2.7' },
+}
+
 /** Test an API key by sending a minimal 1-token completion. Returns ok or error message. */
 export async function testApiKey(envVar: string, apiKey: string): Promise<TestResult> {
+  // Anthropic-compatible providers
+  const anthropicCfg = ANTHROPIC_COMPAT_CONFIGS[envVar]
+  if (anthropicCfg) {
+    try {
+      const client = new Anthropic({ apiKey, baseURL: anthropicCfg.baseURL })
+      await client.messages.create({
+        model: anthropicCfg.model,
+        messages: [{ role: 'user', content: 'hi' }],
+        max_tokens: 1,
+      })
+      return { ok: true }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      // 529 = server overloaded, 429 = rate limited — key is valid, server is just busy
+      if (msg.includes('529') || msg.includes('overloaded') || msg.includes('429') || msg.toLowerCase().includes('rate limit')) {
+        return { ok: true }
+      }
+      if (msg.includes('401') || msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('invalid api key')) {
+        return { ok: false, error: 'Invalid API key — authentication failed' }
+      }
+      if (msg.includes('403')) {
+        return { ok: false, error: 'Access denied — check your plan/permissions' }
+      }
+      return { ok: false, error: msg.split('\n')[0]!.slice(0, 120) }
+    }
+  }
+
+  // OpenAI-compatible providers
   const cfg = TEST_CONFIGS[envVar]
   if (!cfg) return { ok: false, error: `Unknown provider for ${envVar}` }
 
@@ -48,6 +82,10 @@ export async function testApiKey(envVar: string, apiKey: string): Promise<TestRe
     return { ok: true }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
+    // 529 = server overloaded, 429 = rate limited — key is valid, server is just busy
+    if (msg.includes('529') || msg.includes('overloaded') || msg.includes('429') || msg.toLowerCase().includes('rate limit')) {
+      return { ok: true }
+    }
     if (msg.includes('401') || msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('invalid api key')) {
       return { ok: false, error: 'Invalid API key — authentication failed' }
     }
@@ -67,6 +105,7 @@ export const PROVIDER_NAMES: Record<string, string> = {
   GROQ_API_KEY:     'Groq (Llama)',
   DEEPSEEK_API_KEY: 'DeepSeek',
   QWEN_API_KEY:     'Alibaba Qwen',
+  MINIMAX_API_KEY:  'MiniMax',
 }
 
 /** Where to get an API key for each provider */
@@ -78,4 +117,5 @@ export const PROVIDER_KEY_URLS: Record<string, string> = {
   GROQ_API_KEY:     'console.groq.com/keys',
   DEEPSEEK_API_KEY: 'platform.deepseek.com/api_keys',
   QWEN_API_KEY:     'dashscope.aliyuncs.com',
+  MINIMAX_API_KEY:  'api.minimax.io',
 }

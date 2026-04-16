@@ -40,7 +40,9 @@ import { isXtermJs } from '../../ink/terminal.js';
 import { useHasSelection, useSelection } from '../../ink/hooks/use-selection.js';
 import { getGlobalConfig, saveGlobalConfig } from '../../utils/config.js';
 import { getPlatform } from '../../utils/platform.js';
-import { PrBadge } from '../PrBadge.js';
+import { PrBadge } from '../PrBadge.js'
+import { useMainLoopModel } from '../../hooks/useMainLoopModel.js'
+import { getModelOptions } from '../../utils/model/modelOptions.js';
 
 // Dead code elimination: conditional import for proactive mode
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -249,6 +251,15 @@ function ModeIndicator({
     columns
   } = useTerminalSize();
   const modeCycleShortcut = useShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab');
+  const currentModel = useMainLoopModel();
+  const modelLabel = useMemo(() => {
+    const opts = getModelOptions()
+    const found = opts.find(o => o.value === currentModel)
+    if (found) return found.label
+    const idx = currentModel.indexOf(':')
+    if (idx !== -1) return currentModel.slice(idx + 1)
+    return currentModel
+  }, [currentModel]);
   const tasks = useAppState(s => s.tasks);
   const teamContext = useAppState(s_0 => s_0.teamContext);
   // Set once in initialState (main.tsx --remote mode) and never mutated — lazy
@@ -345,13 +356,11 @@ function ModeIndicator({
   // the local permission mode shown here doesn't reflect the agent's state.
   // Rendered before the tasks pill so a long pill label (e.g. ultraplan URL)
   // doesn't push the mode indicator off-screen.
-  const modePart = currentMode && hasActiveMode && !getIsRemoteMode() ? <Text color={getModeColor(currentMode)} key="mode">
+  const modePart = currentMode && hasActiveMode && !getIsRemoteMode() ? <Text color="#00AAFF" key="mode">
         {permissionModeSymbol(currentMode)}{' '}
         {permissionModeTitle(currentMode).toLowerCase()} on
-        {shouldShowModeHint && <Text dimColor>
-            {' '}
-            <KeyboardShortcutHint shortcut={modeCycleShortcut} action="cycle" parens />
-          </Text>}
+        {' '}
+        <Text color="#0066CC">{modelLabel}</Text>
       </Text> : null;
 
   // Build parts array - exclude BackgroundTaskStatus when we have teammate pills
