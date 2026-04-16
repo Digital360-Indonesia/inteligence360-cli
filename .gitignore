@@ -6,3 +6,10 @@ mycli.sh
 -Users-araya-Downloads-ai-lab-claudecode-cli
 .DS_Store
 **/.DS_Store
+
+# Debug/scratch files from development
+*.patch
+*.orig
+old_*.ts
+test_*.js
+test_*.cjs
