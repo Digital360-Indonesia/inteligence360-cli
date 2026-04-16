@@ -499,8 +499,12 @@ async function getProjectFiles(
     rgArgs.push('--no-ignore-vcs')
   }
 
-  const files = await ripGrep(rgArgs, '.', abortSignal)
-  const relativePaths = files.map(f => path.relative(getCwd(), f))
+  // Pass the absolute launch CWD so ripgrep scans the user's project directory,
+  // not process.cwd() (which is always the intelligence360 install dir after
+  // the launcher's `cd "$DIR"`).
+  const launchCwd = getCwd()
+  const files = await ripGrep(rgArgs, launchCwd, abortSignal)
+  const relativePaths = files.map(f => path.relative(launchCwd, f))
 
   const duration = Date.now() - startTime
   logForDebugging(
