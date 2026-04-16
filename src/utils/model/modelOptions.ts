@@ -276,76 +276,51 @@ function getOpusPlanOption(): ModelOption {
 
 function getOpenAIOptions(): ModelOption[] {
   return [
-    { value: 'openai:gpt-5.4',      label: 'GPT-5.4',      description: 'OpenAI GPT-5.4 · Latest flagship',              descriptionForModel: 'OpenAI GPT-5.4',      apiKeyEnv: 'OPENAI_API_KEY' },
-    { value: 'openai:gpt-5.4-mini', label: 'GPT-5.4 Mini', description: 'OpenAI GPT-5.4 Mini · Fast, affordable',        descriptionForModel: 'OpenAI GPT-5.4 Mini', apiKeyEnv: 'OPENAI_API_KEY' },
-    { value: 'openai:gpt-5.2',      label: 'GPT-5.2',      description: 'OpenAI GPT-5.2 · Stable gen-5',                 descriptionForModel: 'OpenAI GPT-5.2',      apiKeyEnv: 'OPENAI_API_KEY' },
-    { value: 'openai:gpt-5.1',      label: 'GPT-5.1',      description: 'OpenAI GPT-5.1 · Reliable, balanced',           descriptionForModel: 'OpenAI GPT-5.1',      apiKeyEnv: 'OPENAI_API_KEY' },
-    { value: 'openai:o4-mini',      label: 'o4 Mini',      description: 'OpenAI o4 Mini · Compact reasoning',            descriptionForModel: 'OpenAI o4-mini',      apiKeyEnv: 'OPENAI_API_KEY' },
-    { value: 'openai:o3',           label: 'o3',            description: 'OpenAI o3 · Full reasoning model',              descriptionForModel: 'OpenAI o3',           apiKeyEnv: 'OPENAI_API_KEY' },
-    { value: 'openai:gpt-4o',       label: 'GPT-4o',       description: 'OpenAI GPT-4o · Proven multimodal flagship',    descriptionForModel: 'OpenAI GPT-4o',       apiKeyEnv: 'OPENAI_API_KEY' },
-    { value: 'openai:gpt-4o-mini',  label: 'GPT-4o Mini',  description: 'OpenAI GPT-4o Mini · Lightweight, low-cost',   descriptionForModel: 'OpenAI GPT-4o Mini',  apiKeyEnv: 'OPENAI_API_KEY' },
+    { value: 'openai:gpt-5.4',      label: 'GPT-5.4',      description: 'OpenAI GPT-5.4 · Latest flagship',     descriptionForModel: 'OpenAI GPT-5.4',      apiKeyEnv: 'OPENAI_API_KEY' },
+    { value: 'openai:gpt-5.4-mini', label: 'GPT-5.4 Mini', description: 'OpenAI GPT-5.4 Mini · Fast, affordable', descriptionForModel: 'OpenAI GPT-5.4 Mini', apiKeyEnv: 'OPENAI_API_KEY' },
+    { value: 'openai:gpt-5.1',      label: 'GPT-5.1',      description: 'OpenAI GPT-5.1 · Reliable, balanced',   descriptionForModel: 'OpenAI GPT-5.1',      apiKeyEnv: 'OPENAI_API_KEY' },
   ]
 }
 
 function getGrokOptions(): ModelOption[] {
   return [
-    { value: 'grok:grok-4.20-reasoning',     label: 'Grok 4.20 Reasoning',     description: 'xAI Grok 4.20 · Latest, reasoning mode',       descriptionForModel: 'xAI Grok 4.20 reasoning',     apiKeyEnv: 'GROK_API_KEY' },
-    { value: 'grok:grok-4.20-non-reasoning', label: 'Grok 4.20 Fast',          description: 'xAI Grok 4.20 · Latest, fast non-reasoning',   descriptionForModel: 'xAI Grok 4.20 non-reasoning', apiKeyEnv: 'GROK_API_KEY' },
-    { value: 'grok:grok-4.1-fast-reasoning', label: 'Grok 4.1 Reasoning',      description: 'xAI Grok 4.1 · Fast reasoning',                descriptionForModel: 'xAI Grok 4.1 fast reasoning', apiKeyEnv: 'GROK_API_KEY' },
-    { value: 'grok:grok-4.1-fast-non-reasoning', label: 'Grok 4.1 Fast',       description: 'xAI Grok 4.1 · Fast non-reasoning',            descriptionForModel: 'xAI Grok 4.1 fast',           apiKeyEnv: 'GROK_API_KEY' },
-    { value: 'grok:grok-4',                  label: 'Grok 4',                  description: 'xAI Grok 4 · Flagship balanced model',         descriptionForModel: 'xAI Grok 4',                  apiKeyEnv: 'GROK_API_KEY' },
-    { value: 'grok:grok-3',                  label: 'Grok 3',                  description: 'xAI Grok 3 · Stable, proven',                  descriptionForModel: 'xAI Grok 3',                  apiKeyEnv: 'GROK_API_KEY' },
-    { value: 'grok:grok-3-mini',             label: 'Grok 3 Mini',             description: 'xAI Grok 3 Mini · Fast, cost-efficient',       descriptionForModel: 'xAI Grok 3 Mini',             apiKeyEnv: 'GROK_API_KEY' },
+    { value: 'grok:grok-4.20-reasoning',     label: 'Grok 4.20 Reasoning', description: 'xAI Grok 4.20 · Latest, reasoning mode',     descriptionForModel: 'xAI Grok 4.20 reasoning',     apiKeyEnv: 'GROK_API_KEY' },
+    { value: 'grok:grok-4.20-non-reasoning', label: 'Grok 4.20 Fast',      description: 'xAI Grok 4.20 · Latest, fast non-reasoning', descriptionForModel: 'xAI Grok 4.20 non-reasoning', apiKeyEnv: 'GROK_API_KEY' },
   ]
 }
 
 function getGeminiOptions(): ModelOption[] {
   return [
-    { value: 'gemini:gemini-3.1-pro-preview',        label: 'Gemini 3.1 Pro',        description: 'Google Gemini 3.1 Pro · Latest preview',       descriptionForModel: 'Google Gemini 3.1 Pro preview',        apiKeyEnv: 'GEMINI_API_KEY' },
-    { value: 'gemini:gemini-3.1-flash-live-preview', label: 'Gemini 3.1 Flash Live', description: 'Google Gemini 3.1 Flash · Live preview',        descriptionForModel: 'Google Gemini 3.1 Flash live preview', apiKeyEnv: 'GEMINI_API_KEY' },
-    { value: 'gemini:gemini-3-flash-preview',        label: 'Gemini 3 Flash',        description: 'Google Gemini 3 Flash · Fast preview',         descriptionForModel: 'Google Gemini 3 Flash preview',        apiKeyEnv: 'GEMINI_API_KEY' },
-    { value: 'gemini:gemini-2.5-pro',                label: 'Gemini 2.5 Pro',        description: 'Google Gemini 2.5 Pro · Stable, 1M context',   descriptionForModel: 'Google Gemini 2.5 Pro',                apiKeyEnv: 'GEMINI_API_KEY' },
-    { value: 'gemini:gemini-2.5-flash',              label: 'Gemini 2.5 Flash',      description: 'Google Gemini 2.5 Flash · Fast, affordable',   descriptionForModel: 'Google Gemini 2.5 Flash',              apiKeyEnv: 'GEMINI_API_KEY' },
+    { value: 'gemini:gemini-3.1-pro-preview',        label: 'Gemini 3.1 Pro',        description: 'Google Gemini 3.1 Pro · Latest preview',  descriptionForModel: 'Google Gemini 3.1 Pro preview',        apiKeyEnv: 'GEMINI_API_KEY' },
+    { value: 'gemini:gemini-3.1-flash-live-preview', label: 'Gemini 3.1 Flash Live', description: 'Google Gemini 3.1 Flash · Live preview',   descriptionForModel: 'Google Gemini 3.1 Flash live preview', apiKeyEnv: 'GEMINI_API_KEY' },
   ]
 }
 
 function getGLMOptions(): ModelOption[] {
   return [
-    { value: 'glm:glm-5.1',       label: 'GLM-5.1',       description: 'Z.ai GLM-5.1 · Latest flagship',           descriptionForModel: 'Z.ai GLM-5.1',       apiKeyEnv: 'GLM_API_KEY' },
-    { value: 'glm:glm-5',         label: 'GLM-5',         description: 'Z.ai GLM-5 · Powerful, stable',            descriptionForModel: 'Z.ai GLM-5',         apiKeyEnv: 'GLM_API_KEY' },
-    { value: 'glm:glm-5-turbo',   label: 'GLM-5 Turbo',   description: 'Z.ai GLM-5 Turbo · Fast, affordable',      descriptionForModel: 'Z.ai GLM-5 Turbo',   apiKeyEnv: 'GLM_API_KEY' },
-    { value: 'glm:glm-4.7',       label: 'GLM-4.7',       description: 'Z.ai GLM-4.7 · Reliable previous gen',     descriptionForModel: 'Z.ai GLM-4.7',       apiKeyEnv: 'GLM_API_KEY' },
+    { value: 'glm:glm-5.1', label: 'GLM-5.1', description: 'Z.ai GLM-5.1 · Latest flagship', descriptionForModel: 'Z.ai GLM-5.1', apiKeyEnv: 'GLM_API_KEY' },
+    { value: 'glm:glm-5',   label: 'GLM-5',   description: 'Z.ai GLM-5 · Powerful, stable',  descriptionForModel: 'Z.ai GLM-5',   apiKeyEnv: 'GLM_API_KEY' },
   ]
 }
 
 function getLlamaOptions(): ModelOption[] {
   return [
-    { value: 'llama:llama-3.3-70b-versatile',       label: 'Llama 3.3 70B',    description: 'Meta Llama 3.3 70B · Versatile, via Groq',   descriptionForModel: 'Meta Llama 3.3 70B via Groq',        apiKeyEnv: 'GROQ_API_KEY' },
-    { value: 'llama:llama-3.1-8b-instant',          label: 'Llama 3.1 8B',     description: 'Meta Llama 3.1 8B · Ultra-fast, via Groq',   descriptionForModel: 'Meta Llama 3.1 8B Instant via Groq', apiKeyEnv: 'GROQ_API_KEY' },
-    { value: 'llama:llama-4-scout-17b-16e-instruct', label: 'Llama 4 Scout',   description: 'Meta Llama 4 Scout · Latest Llama 4',        descriptionForModel: 'Meta Llama 4 Scout via Groq',        apiKeyEnv: 'GROQ_API_KEY' },
+    { value: 'llama:llama-3.3-70b-versatile', label: 'Llama 3.3 70B', description: 'Meta Llama 3.3 70B · Versatile, via Groq', descriptionForModel: 'Meta Llama 3.3 70B via Groq', apiKeyEnv: 'GROQ_API_KEY' },
   ]
 }
 
 function getDeepSeekOptions(): ModelOption[] {
   return [
-    { value: 'deepseek:deepseek-v3.2-speciale',  label: 'DeepSeek V3.2 Speciale', description: 'DeepSeek V3.2 Speciale · Top-tier flagship',    descriptionForModel: 'DeepSeek V3.2 Speciale', apiKeyEnv: 'DEEPSEEK_API_KEY' },
-    { value: 'deepseek:deepseek-v3.2',           label: 'DeepSeek V3.2',          description: 'DeepSeek V3.2 · Latest standard model',         descriptionForModel: 'DeepSeek V3.2',          apiKeyEnv: 'DEEPSEEK_API_KEY' },
-    { value: 'deepseek:deepseek-v3.1-terminus',  label: 'DeepSeek V3.1 Terminus', description: 'DeepSeek V3.1 Terminus · Specialized variant',   descriptionForModel: 'DeepSeek V3.1 Terminus', apiKeyEnv: 'DEEPSEEK_API_KEY' },
-    { value: 'deepseek:deepseek-v3.1',           label: 'DeepSeek V3.1',          description: 'DeepSeek V3.1 · Stable, proven coder',          descriptionForModel: 'DeepSeek V3.1',          apiKeyEnv: 'DEEPSEEK_API_KEY' },
-    { value: 'deepseek:deepseek-r1-0528',        label: 'DeepSeek R1 (0528)',      description: 'DeepSeek R1 May 2025 · Chain-of-thought reasoning', descriptionForModel: 'DeepSeek R1-0528',     apiKeyEnv: 'DEEPSEEK_API_KEY' },
-    { value: 'deepseek:deepseek-v3',             label: 'DeepSeek V3',            description: 'DeepSeek V3 · Affordable, solid baseline',      descriptionForModel: 'DeepSeek V3',            apiKeyEnv: 'DEEPSEEK_API_KEY' },
+    { value: 'deepseek:deepseek-chat',     label: 'DeepSeek Chat',     description: 'DeepSeek Chat · Non-thinking mode',    descriptionForModel: 'DeepSeek Chat via DeepSeek API',     apiKeyEnv: 'DEEPSEEK_API_KEY' },
+    { value: 'deepseek:deepseek-reasoner', label: 'DeepSeek Reasoner', description: 'DeepSeek Reasoner · Thinking mode',    descriptionForModel: 'DeepSeek Reasoner via DeepSeek API', apiKeyEnv: 'DEEPSEEK_API_KEY' },
   ]
 }
 
 function getQwenOptions(): ModelOption[] {
   return [
-    { value: 'qwen:qwen3.6-plus',          label: 'Qwen 3.6 Plus',        description: 'Alibaba Qwen 3.6 Plus · Latest flagship',       descriptionForModel: 'Qwen 3.6 Plus via Dashscope',        apiKeyEnv: 'QWEN_API_KEY' },
-    { value: 'qwen:qwen3.5-omni-plus',     label: 'Qwen 3.5 Omni Plus',   description: 'Alibaba Qwen 3.5 Omni Plus · Multimodal',       descriptionForModel: 'Qwen 3.5 Omni Plus via Dashscope',   apiKeyEnv: 'QWEN_API_KEY' },
-    { value: 'qwen:qwen3.5-omni-flash',    label: 'Qwen 3.5 Omni Flash',  description: 'Alibaba Qwen 3.5 Omni Flash · Fast multimodal', descriptionForModel: 'Qwen 3.5 Omni Flash via Dashscope',  apiKeyEnv: 'QWEN_API_KEY' },
-    { value: 'qwen:qwen3.5-max-preview',   label: 'Qwen 3.5 Max Preview', description: 'Alibaba Qwen 3.5 Max · Preview release',        descriptionForModel: 'Qwen 3.5 Max preview via Dashscope', apiKeyEnv: 'QWEN_API_KEY' },
-    { value: 'qwen:qwen3.5-plus',          label: 'Qwen 3.5 Plus',        description: 'Alibaba Qwen 3.5 Plus · Balanced performance',  descriptionForModel: 'Qwen 3.5 Plus via Dashscope',        apiKeyEnv: 'QWEN_API_KEY' },
-    { value: 'qwen:qwen3.5-flash',         label: 'Qwen 3.5 Flash',       description: 'Alibaba Qwen 3.5 Flash · Fast, low-cost',       descriptionForModel: 'Qwen 3.5 Flash via Dashscope',       apiKeyEnv: 'QWEN_API_KEY' },
-    { value: 'qwen:qwen3-max',             label: 'Qwen 3 Max',           description: 'Alibaba Qwen 3 Max · Stable, proven',           descriptionForModel: 'Qwen 3 Max via Dashscope',           apiKeyEnv: 'QWEN_API_KEY' },
+    { value: 'qwen:qwen3.6-plus',       label: 'Qwen 3.6 Plus',      description: 'Alibaba Qwen 3.6 Plus · Latest flagship',      descriptionForModel: 'Qwen 3.6 Plus via Dashscope',       apiKeyEnv: 'QWEN_API_KEY' },
+    { value: 'qwen:qwen3.5-omni-plus',  label: 'Qwen 3.5 Omni Plus', description: 'Alibaba Qwen 3.5 Omni Plus · Multimodal',       descriptionForModel: 'Qwen 3.5 Omni Plus via Dashscope',  apiKeyEnv: 'QWEN_API_KEY' },
+    { value: 'qwen:qwen3.5-omni-flash', label: 'Qwen 3.5 Omni Flash', description: 'Alibaba Qwen 3.5 Omni Flash · Fast multimodal', descriptionForModel: 'Qwen 3.5 Omni Flash via Dashscope', apiKeyEnv: 'QWEN_API_KEY' },
   ]
 }
 

@@ -14,10 +14,16 @@ fi
 
 # Preserve the user's real CWD before we cd into the project dir
 export INTELLIGENCE360_LAUNCH_CWD="$(pwd)"
+export INTELLIGENCE360_SESSION="1"
 
 # Auto-permissions on by default (skip tool confirmation prompts)
 # Set to 0 to disable: INTELLIGENCE360_AUTO_PERMISSIONS=0 intelligence360
 export INTELLIGENCE360_AUTO_PERMISSIONS="${INTELLIGENCE360_AUTO_PERMISSIONS:-1}"
+
+# Disable Anthropic-internal experimental beta headers.
+# These betas (redact-thinking, context-management-scope, prompt-caching-scope, etc.)
+# require privileged API access and cause 500 errors with regular API keys.
+export CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1
 
 # Load saved API keys
 [ -f ~/.intelligence360.env ] && set -a && source ~/.intelligence360.env && set +a

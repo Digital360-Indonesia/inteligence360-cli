@@ -66,7 +66,7 @@ import { isBilledAsExtraUsage } from '../../utils/extraUsage.js';
 import { getFastModeUnavailableReason, isFastModeAvailable, isFastModeCooldown, isFastModeEnabled, isFastModeSupportedByModel } from '../../utils/fastMode.js';
 import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js';
 import type { PromptInputHelpers } from '../../utils/handlePromptSubmit.js';
-import { getImageFromClipboard, PASTE_THRESHOLD } from '../../utils/imagePaste.js';
+import { getImageFromClipboard, getImagePathFromClipboard, tryReadImageFromPath, PASTE_THRESHOLD } from '../../utils/imagePaste.js';
 import type { ImageDimensions } from '../../utils/imageResizer.js';
 import { cacheImagePath, storeImage } from '../../utils/imageStore.js';
 import { isMacosOptionChar, MACOS_OPTION_SPECIAL_CHARS } from '../../utils/keyboardShortcuts.js';
@@ -1623,20 +1623,30 @@ function PromptInput({
 
   // Handler for chat:imagePaste - paste image from clipboard
   const handleImagePaste = useCallback(() => {
-    void getImageFromClipboard().then(imageData => {
+    void (async () => {
+      // First try reading image data directly from clipboard
+      let imageData = await getImageFromClipboard();
+      if (!imageData && !env.isSSH()) {
+        // Fallback: clipboard may contain a file path to an image (e.g. from Finder drag)
+        const clipPath = await getImagePathFromClipboard();
+        if (clipPath) {
+          imageData = await tryReadImageFromPath(clipPath) ?? null;
+        }
+      }
       if (imageData) {
         onImagePaste(imageData.base64, imageData.mediaType);
       } else {
-        const shortcutDisplay = getShortcutDisplay('chat:imagePaste', 'Chat', 'ctrl+v');
-        const message = env.isSSH() ? "No image found in clipboard. You're SSH'd; try scp?" : `No image found in clipboard. Use ${shortcutDisplay} to paste images.`;
+        const message = env.isSSH()
+          ? "No image found in clipboard. You're SSH'd; try scp?"
+          : 'No PNG image found in clipboard. Copy a screenshot or image first, then press ctrl+v.';
         addNotification({
           key: 'no-image-in-clipboard',
           text: message,
           priority: 'immediate',
-          timeoutMs: 1000
+          timeoutMs: 4000
         });
       }
-    });
+    })();
   }, [addNotification, onImagePaste]);
 
   // Register chat:submit handler directly in the handler registry (not via

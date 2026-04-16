@@ -29,7 +29,7 @@ const TEST_CONFIGS: Record<string, { baseURL: string; model: string }> = {
   GEMINI_API_KEY:   { baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash' },
   GLM_API_KEY:      { baseURL: 'https://api.z.ai/api/coding/paas/v4',                    model: 'glm-5-turbo' },
   GROQ_API_KEY:     { baseURL: 'https://api.groq.com/openai/v1',                         model: 'llama-3.1-8b-instant' },
-  DEEPSEEK_API_KEY: { baseURL: 'https://api.deepseek.com/v1',                            model: 'deepseek-v3' },
+  DEEPSEEK_API_KEY: { baseURL: 'https://api.deepseek.com/v1',                            model: 'deepseek-chat' },
   QWEN_API_KEY:     { baseURL: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', model: 'qwen3.5-flash' },
 }
 
