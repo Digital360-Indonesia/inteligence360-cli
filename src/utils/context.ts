@@ -8,6 +8,48 @@ import { getModelCapability } from './model/modelCapabilities.js'
 // Model context window size (200k tokens for all models right now)
 export const MODEL_CONTEXT_WINDOW_DEFAULT = 200_000
 
+// Hard-coded context windows for known third-party models.
+// getModelCapability() only caches Anthropic model data via anthropic.models.list(),
+// so third-party provider models always fall through to the default 200k.
+// Use these overrides so autoCompact thresholds and token warnings reflect the
+// actual model limits rather than the Claude Code default.
+const THIRD_PARTY_CONTEXT_WINDOWS: Record<string, number> = {
+  // OpenAI
+  'gpt-5.4': 128_000,
+  'gpt-5.4-mini': 128_000,
+  'gpt-5.1': 128_000,
+  // Google Gemini
+  'gemini-3.1-pro-preview': 131_072,
+  'gemini-3.1-flash-live-preview': 131_072,
+  // DeepSeek
+  'deepseek-chat': 64_000,
+  'deepseek-reasoner': 64_000,
+  // Grok
+  'grok-4.20-reasoning': 131_072,
+  'grok-4.20-non-reasoning': 131_072,
+  // Qwen
+  'qwen3.6-plus': 32_768,
+  'qwen3.5-omni-plus': 32_768,
+  'qwen3.5-omni-flash': 32_768,
+  // GLM
+  'glm-5.1': 131_072,
+  'glm-5': 131_072,
+  // Llama (Groq)
+  'llama-3.3-70b-versatile': 32_768,
+  // MiniMax
+  'MiniMax-M2.7': 1_000_000,
+}
+
+/**
+ * Get the context window size for a third-party model.
+ * Falls back to MODEL_CONTEXT_WINDOW_DEFAULT if unknown.
+ */
+function getThirdPartyContextWindow(modelId: string): number {
+  // Strip any provider prefix (e.g. "openai:gpt-5.4" -> "gpt-5.4")
+  const stripped = modelId.replace(/^[a-z]+:/, '')
+  return THIRD_PARTY_CONTEXT_WINDOWS[stripped] ?? MODEL_CONTEXT_WINDOW_DEFAULT
+}
+
 // Maximum output tokens for compact operations
 export const COMPACT_MAX_OUTPUT_TOKENS = 20_000
 
@@ -69,6 +111,12 @@ export function getContextWindowForModel(
   // [1m] suffix — explicit client-side opt-in, respected over all detection
   if (has1mContext(model)) {
     return 1_000_000
+  }
+
+  // Third-party provider models — use hard-coded limits since
+  // getModelCapability() only caches Anthropic model data.
+  if (model.includes(':') || /^(gpt|gemini|deepseek|grok|qwen|glm|llama|MiniMax)/i.test(model)) {
+    return getThirdPartyContextWindow(model)
   }
 
   const cap = getModelCapability(model)
